@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSMT Ecommerce Semester Project</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh; background-attachment: fixed;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .sidebar { position: sticky; top: 24px; height: calc(100vh - 48px); overflow-y: auto; padding-right: 8px; }
+        .m3-card { 
+            background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border-radius: 24px; padding: 24px; margin-bottom: 24px; 
+        }
+        .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, MenuItem, Button, Box, CircularProgress, Tabs, Tab, Grid, Divider, Stack, InputAdornment, Alert, AlertTitle, Slider } = MaterialUI;
+
+        const theme = createTheme({ 
+            palette: { primary: { main: '#3b82f6' }, background: { default: 'transparent' } }, 
+            shape: { borderRadius: 16 }, typography: { fontFamily: 'Inter', h5: { fontWeight: 700 } },
+            components: { MuiTextField: { styleOverrides: { root: { '& .MuiOutlinedInput-root': { background: 'rgba(255,255,255,0.7)' } } } } }
+        });
+
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX6MniGhWOILDUQQlxSTPmKxFM8wilkTP3qiQ0Tq3ZbZCVPFJaZcBrJ-Uc_UNZ_YCoNw/exec"; 
+
+        const NICHE_DATA = {
+            "Beauty": { china: 350, local: 700, kg: 0.15, cbm: 0.001, duty: 20, opt: 2500, cpa: 600, pack: 40, insight: "💄 High volume, low shipping costs. Market is saturated (high CPA). Impulse buys lead to medium RTO rates." },
+            "Fashion": { china: 800, local: 1700, kg: 0.5, cbm: 0.003, duty: 15, opt: 4800, cpa: 850, pack: 60, insight: "👗 Average shipping costs, but sizing issues cause the highest RTO rates. Requires aggressive marketing budgets." },
+            "Electronics": { china: 2800, local: 5500, kg: 0.25, cbm: 0.001, duty: 25, opt: 15000, cpa: 1500, pack: 100, insight: "📱 High ticket sizes require massive liquid cash flow. RTO rates are lower, but you will pay the highest Customs Duties." },
+            "Furniture": { china: 5200, local: 9500, kg: 3.5, cbm: 0.035, duty: 10, opt: 35000, cpa: 3000, pack: 250, insight: "🛋️ Highly bulky. Air freight destroys margins. Demand is inelastic. Very low RTO rates." },
+            "Sports": { china: 1200, local: 2500, kg: 0.8, cbm: 0.006, duty: 15, opt: 8000, cpa: 1000, pack: 80, insight: "⚽ Bulky items increase local courier costs. Steady year-round demand with moderate RTOs." },
+            "Supplements": { china: 1800, local: 3200, kg: 0.35, cbm: 0.002, duty: 20, opt: 9500, cpa: 1200, pack: 50, insight: "💊 High recurring revenue, but high CPA due to ad compliance. Extremely low RTO rate." }
+        };
+
+        const COURIERS = { "Premium": { ship: 250, rtoRate: 0.08, rtoPen: 200 }, "Standard": { ship: 150, rtoRate: 0.15, rtoPen: 150 }, "Economy": { ship: 120, rtoRate: 0.22, rtoPen: 100 } };
+
+        function PerformanceChart({ results }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            useEffect(() => {
+                if(chartInstance.current) chartInstance.current.destroy();
+                if(!results || results.length === 0) return;
+                const ctx = chartRef.current.getContext('2d');
+                chartInstance.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: results.map(r => `Mod ${r[2]}`),
+                        datasets: [
+                            { label: 'Net Cash Flow (Rs)', data: results.map(r => r[12]), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+                            { label: 'Brand Score', data: results.map(r => r[13]), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.4, yAxisID: 'y1' }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { y: { position: 'left' }, y1: { position: 'right', grid: {drawOnChartArea: false} } }
+                    }
+                });
+            }, [results]);
+            return <div style={{height: '300px'}}><canvas ref={chartRef}></canvas></div>;
+        }
+
+        function App() {
+            const [view, setView] = useState("auth"); const [authTab, setAuthTab] = useState(0); const [navTab, setNavTab] = useState(0);
+            const [status, setStatus] = useState("idle"); const [user, setUser] = useState(null);
+            const [form, setForm] = useState({ rollNo: "", email: "", password: "", ceoName: "", companyName: "", niche: "Beauty" });
+            
+            const [m1, setM1] = useState({ method: "China_Sea", courier: "Standard", qty: 0, budget: 0, gVal: "", cif: "", duty: "", gstV: "", gstP: "", landed: "", trueU: "", price: 0, gross: "", op: "" });
+
+            useEffect(() => {
+                const saved = localStorage.getItem('student_creds');
+                if(saved) {
+                    const creds = JSON.parse(saved);
+                    setForm(f => ({...f, email: creds.email, password: creds.password}));
+                    handleAuth(true, creds.email, creds.password);
+                }
+            }, []);
+
+            const handleAuth = async (isLogin, em = form.email, pw = form.password) => {
+                setStatus("loading");
+                try {
+                    if(isLogin) {
+                        const res = await fetch(`${SCRIPT_URL}?action=login&email=${encodeURIComponent(em)}&password=${encodeURIComponent(pw)}`).then(r => r.json());
+                        if(res.status === "success") { 
+                            setUser(res.data); setView("dashboard");
+                            localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
+                        } else { alert(res.message); localStorage.removeItem('student_creds'); }
+                    } else { 
+                        if (!/^(BSMT|MSMT|BMST)\d{5}$/i.test(form.rollNo)) return alert("Invalid Roll No.");
+                        if (!form.email.endsWith("@itu.edu.pk")) return alert("Email must end in @itu.edu.pk");
+                        await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams({action: "register", ...form}) });
+                        alert("Incorporated! Please Login."); setAuthTab(0); 
+                    }
+                } catch (e) { alert("Connection Error."); }
+                setStatus("idle");
+            };
+
+            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
+
+            const cleanNum = (val) => val.replace(/[^0-9.]/g, '');
+
+            const submit = async () => {
+                if(!m1.landed || !m1.trueU || !m1.price) return alert("Complete the manual calculations.");
+                const eq = parseInt(user.cash) - parseFloat(m1.landed) - parseFloat(m1.budget);
+                if(eq < 0) return alert("Insufficient Equity! Your Total Landed Cost + Marketing Budget exceeds your available Cash.");
+                
+                setStatus("busy");
+                await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams({
+                    action: "submitDecision", companyId: user.companyId, module: user.module,
+                    method: m1.method, courier: m1.courier, qty: m1.qty, marketingBudget: m1.budget,
+                    gVal: m1.gVal, cif: m1.cif, duty: m1.duty, gstV: m1.gstV, gstP: m1.gstP,
+                    totalLanded: m1.landed, trueU: m1.trueU, price: m1.price, grossMargin: m1.gross, opMargin: m1.op
+                })});
+                alert("Decision Locked!"); setStatus("locked");
+            };
+
+            const getProj = () => {
+                if(!m1.price || !m1.trueU) return { units: 0, rev: 0, prof: 0 };
+                const opt = NICHE_DATA[user.niche].opt; const c = COURIERS[m1.courier]; const cpa = NICHE_DATA[user.niche].cpa;
+                
+                const marketDemand = Math.floor(1200 * Math.pow((opt / m1.price), 1.8) * (user.brand/100));
+                const budgetDemand = Math.floor((parseFloat(m1.budget) || 0) / cpa);
+                const demand = Math.min(marketDemand, budgetDemand);
+                
+                const dispatched = Math.min(demand, parseInt(user.inventory) + parseInt(m1.qty || 0)); 
+                const deliveredUnits = Math.floor(dispatched * (1 - c.rtoRate));
+                const rtoUnits = dispatched - deliveredUnits;
+                
+                const rev = deliveredUnits * m1.price;
+                const cogs = deliveredUnits * m1.trueU; 
+                const marketingCost = demand * cpa;
+                const shippingCost = (deliveredUnits * c.ship) + (rtoUnits * (c.ship + c.rtoPen));
+                const packCostTotal = dispatched * NICHE_DATA[user.niche].pack;
+                const gatewayTotal = rev * 0.025;
+
+                return { units: demand, rev, prof: rev - cogs - marketingCost - shippingCost - packCostTotal - gatewayTotal };
+            };
+
+            if (view === "dashboard" && user) {
+                const eq = parseInt(user.cash) - (parseFloat(m1.landed) || 0);
+                const remainingAfterBudget = eq - (parseFloat(m1.budget) || 0);
+                const s = NICHE_DATA[user.niche]; const c = COURIERS[m1.courier]; const p = getProj();
+                const baseCost = m1.method === "Local" ? s.local : s.china;
+                const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
+
+                return (
+                    <ThemeProvider theme={theme}><CssBaseline />
+                        <Container maxWidth="xl" sx={{ py: 4 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                                <div>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b">{user.companyName} | Mod {user.module}</Typography>
+                                    <Typography variant="body1" color="#475569">{user.rollNo} • Niche: {user.niche}</Typography>
+                                </div>
+                                <Box textAlign="right" display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+                                    <Button variant="outlined" color="error" size="small" onClick={logout}>Logout</Button>
+                                    <Typography variant="h6" className="mono" color={remainingAfterBudget >= 0 ? "success.main" : "error.main"}>
+                                        Available Cash: Rs {remainingAfterBudget.toLocaleString()}
+                                    </Typography>
+                                    <Typography variant="body2" className="mono">Warehouse: {user.inventory} Units | Brand Score: {user.brand}/150</Typography>
+                                </Box>
+                            </Box>
+
+                            <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)} sx={{mb:3}}>
+                                <Tab label="Operations & Logistics" />
+                                <Tab label="Historical Performance" />
+                            </Tabs>
+
+                            {navTab === 0 && (
+                                <Grid container spacing={4}>
+                                    <Grid item xs={12} md={4}>
+                                        <Box className="sidebar">
+                                            <div className="m3-card">
+                                                <Typography variant="overline" color="primary" fontWeight="bold">DYNAMIC DOSSIER: {user.niche}</Typography>
+                                                <div className="data-row"><Typography variant="body2">Unit Cost (FOB)</Typography><Typography className="mono">Rs {baseCost}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Weight / Volume</Typography><Typography className="mono">{s.kg}KG / {s.cbm}CBM</Typography></div>
+                                                <div className="data-row"><Typography variant="body2" fontWeight="bold">Active Freight Rate</Typography><Typography className="mono" fontWeight="bold">{freightDisplay}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Import Duty / GST Rate</Typography><Typography className="mono">{m1.method === "Local" ? "0%" : `${s.duty}%`} / 18%</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Agent / Misc Fees</Typography><Typography className="mono">{m1.method === "Local" ? "Rs 0" : "Rs 12,800 / Rs 10k"}</Typography></div>
+                                                
+                                                <Divider sx={{my:2}}/>
+                                                <Typography variant="overline" color="primary" fontWeight="bold">FULFILLMENT: {m1.courier}</Typography>
+                                                <div className="data-row"><Typography variant="body2" color="secondary" fontWeight="bold">Target CPA</Typography><Typography className="mono" fontWeight="bold">Rs {s.cpa}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Courier Delivery Cost</Typography><Typography className="mono">Rs {c.ship}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Pack & Gateway Fee</Typography><Typography className="mono">Rs {s.pack} / 2.5%</Typography></div>
+                                                <div className="data-row"><Typography variant="body2" color="error.main">Est. RTO Rate / Penalty</Typography><Typography className="mono" color="error.main">{(c.rtoRate * 100).toFixed(0)}% / Rs {c.rtoPen}</Typography></div>
+                                            </div>
+                                        </Box>
+                                    </Grid>
+                                    
+                                    <Grid item xs={12} md={8}>
+                                        <div className="m3-card">
+                                            <Typography variant="h6" mb={3}>1. Strategic Configuration (Sliders)</Typography>
+                                            <Grid container spacing={3}>
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField select fullWidth label="Sourcing Method" value={m1.method} onChange={e=>setM1({...m1, method: e.target.value})} disabled={status === "locked"}><MenuItem value="Local">Local</MenuItem><MenuItem value="China_Air">China Air</MenuItem><MenuItem value="China_Sea">China Sea</MenuItem></TextField>
+                                                </Grid>
+                                                <Grid item xs={12} md={6}>
+                                                    <TextField select fullWidth label="Courier Partner" value={m1.courier} onChange={e=>setM1({...m1, courier: e.target.value})} disabled={status === "locked"}>{Object.keys(COURIERS).map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</TextField>
+                                                </Grid>
+                                                
+                                                <Grid item xs={12} md={6}>
+                                                    <Typography variant="body2" color="text.secondary">Order Quantity (Units)</Typography>
+                                                    <Stack direction="row" spacing={2} alignItems="center">
+                                                        <Slider value={Number(m1.qty)||0} min={0} max={5000} onChange={(e,v)=>setM1({...m1, qty: v})} disabled={status === "locked"} />
+                                                        <TextField type="text" size="small" value={m1.qty} onChange={e=>setM1({...m1, qty: cleanNum(e.target.value)})} sx={{width: '90px'}} disabled={status === "locked"} />
+                                                    </Stack>
+                                                </Grid>
+                                                
+                                                <Grid item xs={12} md={6}>
+                                                    <Typography variant="body2" color="text.secondary">Marketing Budget (PKR) - Caps Demand</Typography>
+                                                    <Stack direction="row" spacing={2} alignItems="center">
+                                                        <Slider value={Number(m1.budget)||0} min={0} max={eq > 0 ? eq : 100000} onChange={(e,v)=>setM1({...m1, budget: v})} disabled={status === "locked"} />
+                                                        <TextField type="text" size="small" value={m1.budget} onChange={e=>setM1({...m1, budget: cleanNum(e.target.value)})} sx={{width: '120px'}} disabled={status === "locked"} />
+                                                    </Stack>
+                                                </Grid>
+
+                                                <Grid item xs={12} md={12}>
+                                                    <Typography variant="body2" color="text.secondary">Retail Selling Price (PKR)</Typography>
+                                                    <Stack direction="row" spacing={2} alignItems="center">
+                                                        <Slider value={Number(m1.price)||0} min={0} max={s.opt * 3} onChange={(e,v)=>setM1({...m1, price: v})} disabled={status === "locked"} />
+                                                        <TextField type="text" size="small" value={m1.price} onChange={e=>setM1({...m1, price: cleanNum(e.target.value)})} sx={{width: '120px'}} disabled={status === "locked"} />
+                                                    </Stack>
+                                                </Grid>
+                                            </Grid>
+                                        </div>
+
+                                        <div className="m3-card">
+                                            <Typography variant="h6" mb={3}>2. Procure-to-Pay Calculation (Manual)</Typography>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={6}><TextField fullWidth label="Total Goods Value" value={m1.gVal} onChange={e=>setM1({...m1, gVal: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={6}><TextField fullWidth label="CIF Value" value={m1.cif} onChange={e=>setM1({...m1, cif: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={6}><TextField fullWidth label="Total Import Duty Paid" value={m1.duty} onChange={e=>setM1({...m1, duty: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={6}><TextField fullWidth label="Value for GST" value={m1.gstV} onChange={e=>setM1({...m1, gstV: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={6}><TextField fullWidth label="Total GST Paid" value={m1.gstP} onChange={e=>setM1({...m1, gstP: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={6}><TextField fullWidth label="TOTAL LANDED COST" value={m1.landed} onChange={e=>setM1({...m1, landed: cleanNum(e.target.value)})} disabled={status === "locked"} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} /></Grid>
+                                                <Grid item xs={12} md={4}><TextField fullWidth label="TRUE LANDED COST (Per Unit)" value={m1.trueU} onChange={e=>setM1({...m1, trueU: cleanNum(e.target.value)})} disabled={status === "locked"} InputProps={{ startAdornment: <InputAdornment position="start">Rs</InputAdornment> }} /></Grid>
+                                                <Grid item xs={12} md={4}><TextField fullWidth label="Target Gross Margin (%)" value={m1.gross} onChange={e=>setM1({...m1, gross: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                                <Grid item xs={12} md={4}><TextField fullWidth label="Target Operating Margin (%)" value={m1.op} onChange={e=>setM1({...m1, op: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
+                                            </Grid>
+                                        </div>
+
+                                        <div className="m3-card" style={{background: '#1e293b', color: '#fff', border: 'none'}}>
+                                            <Typography variant="overline" color="#94a3b8">BUDGET-ADJUSTED MONTHLY FORECAST</Typography>
+                                            <Grid container spacing={2} mt={1}>
+                                                <Grid item xs={4}><Typography variant="caption" color="#cbd5e1">GROSS DEMAND</Typography><Typography variant="h5" className="mono">{p.units.toLocaleString()}</Typography></Grid>
+                                                <Grid item xs={4}><Typography variant="caption" color="#cbd5e1">PROJ. REVENUE</Typography><Typography variant="h5" className="mono">Rs {p.rev.toLocaleString()}</Typography></Grid>
+                                                <Grid item xs={4}><Typography variant="caption" color="#cbd5e1">PROJ. NET PROFIT</Typography><Typography variant="h5" color={p.prof > 0 ? "#10b981" : "#ef4444"} className="mono">Rs {p.prof.toLocaleString()}</Typography></Grid>
+                                                <Grid item xs={12} mt={2}>
+                                                    <Button variant="contained" fullWidth size="large" onClick={submit} disabled={status === "busy" || status === "locked" || remainingAfterBudget < 0} sx={{py: 1.5}}>
+                                                        {status === "locked" ? "Decision Locked ✓" : (remainingAfterBudget < 0 ? "Insufficient Cash for Goods + Ads" : "Submit Module Decision")}
+                                                    </Button>
+                                                </Grid>
+                                            </Grid>
+                                        </div>
+                                    </Grid>
+                                </Grid>
+                            )}
+
+                            {navTab === 1 && (
+                                <>
+                                    <div className="m3-card">
+                                        <Typography variant="h6" mb={2}>Growth Trajectory</Typography>
+                                        <PerformanceChart results={user.results} />
+                                    </div>
+                                    <div className="m3-card">
+                                        <Typography variant="h6" mb={3}>P&L Ledger</Typography>
+                                        <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px'}}>
+                                            <thead><tr style={{borderBottom: '2px solid rgba(0,0,0,0.1)'}}><th>Mod</th><th>Dem / Deliv</th><th>RTO / Stockout</th><th>Revenue</th><th>Marketing</th><th>Shipping / Hold</th><th>Net Cash Flow</th></tr></thead>
+                                            <tbody>
+                                                {user.results.length === 0 ? <tr><td colSpan="7" style={{padding: '20px 0'}}>No simulation data yet. Complete Module 1.</td></tr> : user.results.map((r, i) => (
+                                                    <React.Fragment key={i}>
+                                                        <tr style={{height: '50px', borderBottom: '1px solid rgba(0,0,0,0.05)'}}>
+                                                            <td><b>M{r[2]}</b></td>
+                                                            <td><span style={{background:'#e0e7ff', padding:'4px 8px', borderRadius:'4px'}}>{r[3]}</span> / {r[7]}</td>
+                                                            <td><span style={{color: '#ef4444'}}>{r[6]} RTO</span> / <span style={{color: r[5]>0?'#ef4444':'#10b981'}}>{r[5]} Out</span></td>
+                                                            <td className="mono">Rs {parseInt(r[8]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: '#ef4444'}}>Rs {parseInt(r[9]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: '#ef4444'}}>Rs {parseInt(r[10]).toLocaleString()} / Rs {parseInt(r[11]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: r[12]>0?'#10b981':'#ef4444', fontSize: '16px'}}><b>Rs {parseInt(r[12]).toLocaleString()}</b></td>
+                                                        </tr>
+                                                        <tr style={{borderBottom: '2px solid rgba(0,0,0,0.1)'}}>
+                                                            <td colSpan="7" style={{padding: '16px', background: 'rgba(255,255,255,0.4)', borderRadius: '0 0 12px 12px'}}>
+                                                                <Typography variant="body2" color="primary"><b>✨ Insturctor Feedback:</b> {r[14]}</Typography>
+                                                            </td>
+                                                        </tr>
+                                                    </React.Fragment>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </Container>
+                    </ThemeProvider>
+                );
+            }
+
+            return (
+                <ThemeProvider theme={theme}><CssBaseline />
+                    <Container maxWidth="sm" sx={{ py: 10 }}>
+                        <div className="m3-card" style={{background: 'rgba(255,255,255,0.7)'}}>
+                            <Box textAlign="center" mb={4}><Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography><Typography variant="body2" color="text.secondary">Semester Project</Typography></Box>
+                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}><Tab label="Login" /><Tab label="Register" /></Tabs>
+                            <Stack spacing={3}>
+                                {authTab === 1 && <TextField label="Roll No (e.g. BSMT22001)" fullWidth value={form.rollNo} onChange={e=>setForm({...form, rollNo:e.target.value.toUpperCase()})} />}
+                                <TextField label="Email (@itu.edu.pk)" fullWidth value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
+                                <TextField label="Password" type="password" fullWidth value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+                                {authTab === 1 && (
+                                    <>
+                                        <TextField label="CEO Name" fullWidth value={form.ceoName} onChange={e=>setForm({...form, ceoName:e.target.value})} />
+                                        <TextField label="Company Name" fullWidth value={form.companyName} onChange={e=>setForm({...form, companyName:e.target.value})} />
+                                        <TextField select label="Business Niche" fullWidth value={form.niche} onChange={e=>setForm({...form, niche:e.target.value})}>
+                                            {Object.keys(NICHE_DATA).map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
+                                        </TextField>
+                                        
+                                        <Alert severity="info" sx={{ mt: 1, borderRadius: 2, background: 'rgba(255,255,255,0.8)' }}>
+                                            <AlertTitle>Niche Economic Profile</AlertTitle>
+                                            <Typography variant="body2" sx={{lineHeight: 1.5}}>{NICHE_DATA[form.niche].insight}</Typography>
+                                        </Alert>
+                                    </>
+                                )}
+                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(authTab===0)} disabled={status==="loading"} sx={{py: 1.5, borderRadius: 2}}>{status==="loading" ? <CircularProgress size={24} color="inherit"/> : (authTab===0?"Secure Login":"Incorporate Entity")}</Button>
+                            </Stack>
+                        </div>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
+    </script>
+</body>
+</html>
