@@ -100,6 +100,8 @@
                     if(isLogin) {
                         const res = await fetch(`${SCRIPT_URL}?action=login&email=${encodeURIComponent(em)}&password=${encodeURIComponent(pw)}`).then(r => r.json());
                         if(res.status === "success") { 
+                            res.data.module = parseInt(res.data.module, 10);
+                            
                             setUser(res.data); 
                             if(res.data.module > 1 && res.data.lastBudget) {
                                 setM1(prev => ({...prev, budget: res.data.lastBudget, price: res.data.lastPrice}));
@@ -122,23 +124,26 @@
 
             const submit = async () => {
                 if(!m1.landed || !m1.trueU || !m1.price) return alert("Complete the manual calculations.");
-                if (user.module === 2 && (!m2.recurringModel || !m2.trialStrategy || !m2.churnStrategy)) {
-                    return alert("Please complete your CEO Strategy text boxes.");
+                
+                if (user.module == 2) {
+                    if ((m2.recurringModel || "").trim().length < 50 || (m2.trialStrategy || "").trim().length < 50 || (m2.churnStrategy || "").trim().length < 50) {
+                        return alert("Error: All CEO Strategy text boxes must be at least 50 characters long to submit.");
+                    }
                 }
 
                 const eq = parseInt(user.cash) - parseFloat(m1.landed) - parseFloat(m1.budget);
                 if(eq < 0) return alert("Insufficient Equity! Your Total Landed Cost + Marketing Budget exceeds your available Cash.");
                 
                 setStatus("busy");
-                const finalMethod = (user.module === 2 && m2.useBridge) ? m1.method + " / " + m2.bridgeMethod : m1.method;
-                const finalQty = (user.module === 2 && m2.useBridge) ? parseInt(m1.qty) + parseInt(m2.bridgeQty) : m1.qty;
+                const finalMethod = (user.module == 2 && m2.useBridge) ? m1.method + " / " + m2.bridgeMethod : m1.method;
+                const finalQty = (user.module == 2 && m2.useBridge) ? parseInt(m1.qty) + parseInt(m2.bridgeQty) : m1.qty;
 
                 await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams({
                     action: "submitDecision", companyId: user.companyId, module: user.module,
                     method: finalMethod, courier: m1.courier, qty: finalQty, marketingBudget: m1.budget,
                     gVal: m1.gVal, cif: m1.cif, duty: m1.duty, gstV: m1.gstV, gstP: m1.gstP,
                     totalLanded: m1.landed, trueU: m1.trueU, price: m1.price, grossMargin: m1.gross, opMargin: m1.op,
-                    recurringModel: m2.recurringModel, trialStrategy: m2.trialStrategy, churnStrategy: m2.churnStrategy, subDiscount: m2.subDiscount,
+                    recurringModel: m2.recurringModel.trim(), trialStrategy: m2.trialStrategy.trim(), churnStrategy: m2.churnStrategy.trim(), subDiscount: m2.subDiscount,
                     effectiveAvail: getProj().effectiveAvailForBackend
                 })});
                 alert(`Module ${user.module} Decision Locked!`); setStatus("locked");
@@ -148,10 +153,10 @@
                 if(!m1.price) return { demand: 0, dispatched: 0, effectiveAvailForBackend: 0, m2Avail: 0, m3Avail: 0, rev: 0, prof: 0, actualCpa: 0 };
                 const s = NICHE_DATA[user.niche]; const c = COURIERS[m1.courier]; 
                 
-                const m2CpaMultiplier = user.module === 2 ? 1.5 : 1.0;
+                const m2CpaMultiplier = user.module == 2 ? 1.5 : 1.0;
                 const actualCpa = s.cpa * m2CpaMultiplier;
                 
-                const organicBase = user.module === 2 ? Math.floor(user.brand * 4.0) : 0; 
+                const organicBase = user.module == 2 ? Math.floor(user.brand * 4.0) : 0; 
                 const budgetBase = Math.floor((parseFloat(m1.budget) || 0) / actualCpa);
                 const totalBaseTraffic = organicBase + budgetBase;
                 
@@ -161,16 +166,16 @@
                 const demand = Math.floor(totalBaseTraffic * boundedElasticity * (user.brand / 100));
                 
                 const primaryQty = parseInt(m1.qty) || 0;
-                const bridgeQty = (user.module === 2 && m2.useBridge) ? (parseInt(m2.bridgeQty) || 0) : 0;
+                const bridgeQty = (user.module == 2 && m2.useBridge) ? (parseInt(m2.bridgeQty) || 0) : 0;
                 
                 let m2Primary = primaryQty; let m3Primary = 0;
-                if (user.module === 2) {
+                if (user.module == 2) {
                     if (m1.method === "China_Sea") { m2Primary = 0; m3Primary = primaryQty; }
                     else if (m1.method === "China_Air") { m2Primary = Math.floor(primaryQty * 0.5); m3Primary = primaryQty - m2Primary; }
                 }
                 
                 let m2Bridge = bridgeQty; let m3Bridge = 0;
-                if (user.module === 2 && m2.useBridge) {
+                if (user.module == 2 && m2.useBridge) {
                     if (m2.bridgeMethod === "China_Air") { m2Bridge = Math.floor(bridgeQty * 0.5); m3Bridge = bridgeQty - m2Bridge; }
                 }
                 
@@ -186,8 +191,7 @@
                 
                 const unitTrueCost = parseFloat(m1.trueU) || 0;
                 
-                // Deduction of subscription discount applied to current month revenue
-                const effectivePrice = user.module === 2 ? m1.price * (1 - m2.subDiscount/100) : m1.price;
+                const effectivePrice = user.module == 2 ? m1.price * (1 - m2.subDiscount/100) : m1.price;
                 const rev = deliveredUnits * effectivePrice;
                 
                 const cogs = deliveredUnits * unitTrueCost; 
@@ -205,7 +209,7 @@
                 const s = NICHE_DATA[user.niche]; const c = COURIERS[m1.courier]; const p = getProj();
                 const baseCost = m1.method === "Local" ? s.local : s.china;
                 const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
-                const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value"; // Explicitly added insurance display
+                const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value"; 
 
                 const unitTrueCost = parseFloat(m1.trueU) || 0;
                 const baseProfitPerUnit = m1.price - unitTrueCost - c.ship - s.pack;
@@ -215,6 +219,13 @@
                 const subLTV = subProfitPerUnit * 6; 
                 
                 const cacTarget = p.actualCpa * 3;
+
+                // NEW: Logic to disable the submit button if strategies are too short
+                const isStrategyIncomplete = user.module == 2 && (
+                    (m2.recurringModel || "").trim().length < 50 ||
+                    (m2.trialStrategy || "").trim().length < 50 ||
+                    (m2.churnStrategy || "").trim().length < 50
+                );
 
                 return (
                     <ThemeProvider theme={theme}><CssBaseline />
@@ -277,8 +288,7 @@
                                                         </Stack>
                                                     </Grid>
 
-                                                    {/* Bridge Stock */}
-                                                    {user.module === 2 && (
+                                                    {user.module == 2 && (
                                                         <Grid item xs={12}>
                                                             {!m2.useBridge ? (
                                                                 <Button variant="outlined" fullWidth size="small" startIcon={<Icon>add_circle_outline</Icon>} onClick={()=>setM2({...m2, useBridge: true})}>Add Bridge Stock (Split Order)</Button>
@@ -315,7 +325,7 @@
                                             </div>
 
                                             <div className="m3-card">
-                                                <Typography variant="h6" mb={2} fontSize="1rem" className="icon-text"><Icon color="primary">calculate</Icon> 2. Procure-to-Pay {user.module === 2 && "(Blended)"}</Typography>
+                                                <Typography variant="h6" mb={2} fontSize="1rem" className="icon-text"><Icon color="primary">calculate</Icon> 2. Procure-to-Pay {user.module == 2 && "(Blended)"}</Typography>
                                                 <Grid container spacing={2}>
                                                     <Grid item xs={6}><TextField fullWidth size="small" label="Total Goods" value={m1.gVal} onChange={e=>setM1({...m1, gVal: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
                                                     <Grid item xs={6}><TextField fullWidth size="small" label="CIF Value" value={m1.cif} onChange={e=>setM1({...m1, cif: cleanNum(e.target.value)})} disabled={status === "locked"} /></Grid>
@@ -334,14 +344,14 @@
                                     {/* RIGHT MAIN WINDOW */}
                                     <Grid item xs={12} md={8}>
                                         
-                                        {user.module === 1 && (
+                                        {user.module == 1 && (
                                             <div className="m3-card">
                                                 <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>rocket_launch</Icon> MODULE 1 SCENARIO: THE COLD START</Typography>
                                                 <Typography variant="body1" sx={{mt: 1}}>You have Rs 1,000,000 in equity and zero customers. Your goal is to launch your brand, secure inventory, and build an Atomic Network. Configure your strategy on the left to penetrate the market.</Typography>
                                             </div>
                                         )}
 
-                                        {user.module === 2 && (
+                                        {user.module == 2 && (
                                             <div className="m3-card" style={{border: '1px solid rgba(139, 92, 246, 0.4)'}}>
                                                 <Typography variant="overline" color="#8b5cf6" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>warning_amber</Icon> MACRO SHOCK: THE RECURRING SQUEEZE</Typography>
                                                 <Typography variant="body2" sx={{mt: 1, mb: 3}}>Warehouse rents have doubled. RTOs are spiking. Advertising (CAC) has instantly become <b>50% more expensive</b>. Traditional one-off sales are exhausting capital. The Board mandates you pivot a portion of your business to a <b>Recurring Revenue Model</b> to stabilize your cash flow.</Typography>
@@ -368,13 +378,37 @@
                                                 <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">edit_note</Icon> CEO Strategy: Written Briefing</Typography>
                                                 
                                                 <Typography variant="body2" fontWeight="bold" mb={1}>1. Recurring Revenue Architecture</Typography>
-                                                <TextField fullWidth multiline rows={3} placeholder="What is your recurring model? (e.g., Subscription Box, VIP Membership, Replenishment). Pitch your exact offer to the Pakistani consumer." value={m2.recurringModel} onChange={e=>setM2({...m2, recurringModel: e.target.value})} sx={{mb: 3}} />
+                                                <TextField 
+                                                    fullWidth multiline rows={3} 
+                                                    placeholder="What is your recurring model? (e.g., Subscription Box, VIP Membership, Replenishment). Pitch your exact offer." 
+                                                    value={m2.recurringModel} 
+                                                    onChange={e=>setM2({...m2, recurringModel: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m2.recurringModel ? `${m2.recurringModel.trim().length} / 50 characters min` : "Minimum 50 characters required"}
+                                                    error={m2.recurringModel && m2.recurringModel.trim().length < 50}
+                                                />
                                                 
                                                 <Typography variant="body2" fontWeight="bold" mb={1}>2. Acquisition & Trial Strategy</Typography>
-                                                <TextField fullWidth multiline rows={2} placeholder="How will you overcome checkout friction to acquire subscribers? (e.g., $1 Trial, First Month Free)." value={m2.trialStrategy} onChange={e=>setM2({...m2, trialStrategy: e.target.value})} sx={{mb: 3}} />
+                                                <TextField 
+                                                    fullWidth multiline rows={2} 
+                                                    placeholder="How will you overcome checkout friction to acquire subscribers? (e.g., $1 Trial, First Month Free)." 
+                                                    value={m2.trialStrategy} 
+                                                    onChange={e=>setM2({...m2, trialStrategy: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m2.trialStrategy ? `${m2.trialStrategy.trim().length} / 50 characters min` : "Minimum 50 characters required"}
+                                                    error={m2.trialStrategy && m2.trialStrategy.trim().length < 50}
+                                                />
                                                 
                                                 <Typography variant="body2" fontWeight="bold" mb={1}>3. Churn Mitigation & 10x Value</Typography>
-                                                <TextField fullWidth multiline rows={3} placeholder="If your supply chain faces a 2-week delay, how will you prevent churn? What is your 'Retention Booster'?" value={m2.churnStrategy} onChange={e=>setM2({...m2, churnStrategy: e.target.value})} sx={{mb: 3}} />
+                                                <TextField 
+                                                    fullWidth multiline rows={3} 
+                                                    placeholder="If your supply chain faces a 2-week delay, how will you prevent churn? What is your 'Retention Booster'?" 
+                                                    value={m2.churnStrategy} 
+                                                    onChange={e=>setM2({...m2, churnStrategy: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m2.churnStrategy ? `${m2.churnStrategy.trim().length} / 50 characters min` : "Minimum 50 characters required"}
+                                                    error={m2.churnStrategy && m2.churnStrategy.trim().length < 50}
+                                                />
 
                                                 <Typography variant="body2" color="text.secondary">Subscription Price Discount: {m2.subDiscount}% Off Retail Price</Typography>
                                                 <Slider value={m2.subDiscount} min={0} max={50} onChange={(e,v)=>setM2({...m2, subDiscount: v})} sx={{color: '#8b5cf6'}} />
@@ -403,8 +437,7 @@
                                                     <Typography variant="h5" color={p.prof > 0 ? "#10b981" : "#ef4444"} className="mono">Rs {p.prof.toLocaleString()}</Typography>
                                                 </Grid>
                                                 
-                                                {/* THE TIMELINE WARNING */}
-                                                {user.module === 2 && (p.m3Avail > 0 || p.m2Avail < p.demand) && (
+                                                {user.module == 2 && (p.m3Avail > 0 || p.m2Avail < p.demand) && (
                                                     <Grid item xs={12}>
                                                         <Box sx={{background: 'rgba(0,0,0,0.2)', p: 1.5, borderRadius: 2, mt: 1}}>
                                                             <Typography variant="caption" color="#cbd5e1" display="flex" alignItems="center" gap="4px" mb={0.5}><Icon sx={{fontSize: 16}}>schedule</Icon> REALITY CHECK: LEAD TIME IMPACT</Typography>
@@ -421,8 +454,8 @@
                                                 )}
 
                                                 <Grid item xs={12} mt={2}>
-                                                    <Button variant="contained" fullWidth size="large" onClick={submit} disabled={status === "busy" || status === "locked" || remainingAfterBudget < 0} sx={{py: 1.5, fontFamily: 'Poppins', fontWeight: 600}}>
-                                                        {status === "locked" ? `Module ${user.module} Decision Locked ✓` : (remainingAfterBudget < 0 ? "Insufficient Cash" : `Submit Module ${user.module} Strategy`)}
+                                                    <Button variant="contained" fullWidth size="large" onClick={submit} disabled={status === "busy" || status === "locked" || remainingAfterBudget < 0 || isStrategyIncomplete} sx={{py: 1.5, fontFamily: 'Poppins', fontWeight: 600}}>
+                                                        {status === "locked" ? `Module ${user.module} Decision Locked ✓` : (remainingAfterBudget < 0 ? "Insufficient Cash" : (isStrategyIncomplete ? "Write 50+ chars in Strategy Boxes" : `Submit Module ${user.module} Strategy`))}
                                                     </Button>
                                                 </Grid>
                                             </Grid>
