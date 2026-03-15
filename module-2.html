@@ -220,7 +220,6 @@
                 
                 const cacTarget = p.actualCpa * 3;
 
-                // NEW: Logic to disable the submit button if strategies are too short
                 const isStrategyIncomplete = user.module == 2 && (
                     (m2.recurringModel || "").trim().length < 50 ||
                     (m2.trialStrategy || "").trim().length < 50 ||
@@ -233,14 +232,14 @@
                             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                                 <div>
                                     <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text">
-                                        <Icon sx={{fontSize: 32, color: '#3b82f6'}}>dashboard</Icon> {user.companyName} <span style={{fontSize:'18px', color:'#94a3b8'}}>| Mod {user.module}</span>
+                                        <Icon sx={{fontSize: 32, color: '#3b82f6'}}>dashboard</Icon> {user.companyName} <span style={{fontSize:'18px', color:'#94a3b8'}}>| Mod {user.module >= 3 ? "2 (Completed)" : user.module}</span>
                                     </Typography>
                                     <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
                                 </div>
                                 <Box textAlign="right" display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
                                     <Button variant="outlined" color="error" size="small" onClick={logout} startIcon={<Icon>logout</Icon>}>Logout</Button>
-                                    <Typography variant="h6" className="mono" color={remainingAfterBudget >= 0 ? "success.main" : "error.main"}>
-                                        Available Cash: Rs {remainingAfterBudget.toLocaleString()}
+                                    <Typography variant="h6" className="mono" color={user.cash >= 0 ? "success.main" : "error.main"}>
+                                        Available Cash: Rs {parseInt(user.cash).toLocaleString()}
                                     </Typography>
                                     <Typography variant="body2" className="mono">Warehouse: {user.inventory} Units | Brand Score: {user.brand}/150</Typography>
                                 </Box>
@@ -251,7 +250,22 @@
                                 <Tab icon={<Icon sx={{fontSize: 20}}>insights</Icon>} iconPosition="start" label="Historical Performance" />
                             </Tabs>
 
-                            {navTab === 0 && (
+                            {/* MODULE 3 LOCK SCREEN */}
+                            {navTab === 0 && user.module >= 3 && (
+                                <div className="m3-card" style={{textAlign: 'center', padding: '80px 20px', border: '2px dashed rgba(139, 92, 246, 0.5)'}}>
+                                    <Icon sx={{fontSize: 80, color: '#8b5cf6', mb: 2}}>lock</Icon>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" mb={2}>Module 3 is Locked</Typography>
+                                    <Typography variant="body1" color="#475569" mb={4} maxWidth="600px" mx="auto">
+                                        Congratulations on completing Module 2! The Board of Directors is currently reviewing your recurring revenue performance. Module 3 will be unlocked by your instructor during the next lecture.
+                                    </Typography>
+                                    <Button variant="contained" size="large" onClick={() => setNavTab(1)} startIcon={<Icon>insights</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5}}>
+                                        View Your M2 Results
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* MODULE 1 & 2 ACTIVE SCREEN */}
+                            {navTab === 0 && user.module <= 2 && (
                                 <Grid container spacing={4}>
                                     
                                     {/* LEFT SIDEBAR */}
