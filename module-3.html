@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSMT Ecommerce Semester Project</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            min-height: 100vh; background-attachment: fixed;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .sidebar { position: sticky; top: 24px; height: calc(100vh - 48px); overflow-y: auto; padding-right: 8px; }
+        .m3-card { 
+            background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border-radius: 24px; padding: 24px; margin-bottom: 24px; 
+        }
+        .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .icon-text { display: flex; align-items: center; gap: 8px; }
+        .bottom-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 1400px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 16px 32px;
+            z-index: 1000;
+            color: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease-in-out;
+        }
+        .bottom-bar.minimized {
+            transform: translate(-50%, calc(100%));
+        }
+        .toggle-btn {
+            position: absolute;
+            top: -15px;
+            right: 40px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid white;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, MenuItem, Button, Box, CircularProgress, Tabs, Tab, Grid, Divider, Stack, Alert, AlertTitle, Slider, Icon, Switch, FormControlLabel } = MaterialUI;
+
+        const theme = createTheme({ 
+            palette: { primary: { main: '#3b82f6' }, background: { default: 'transparent' } }, 
+            shape: { borderRadius: 16 }, typography: { fontFamily: 'Poppins', h5: { fontWeight: 700 }, h6: { fontWeight: 600 } },
+            components: { MuiTextField: { styleOverrides: { root: { '& .MuiOutlinedInput-root': { background: 'rgba(255,255,255,0.7)' } } } } }
+        });
+
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX6MniGhWOILDUQQlxSTPmKxFM8wilkTP3qiQ0Tq3ZbZCVPFJaZcBrJ-Uc_UNZ_YCoNw/exec"; 
+
+        const NICHE_DATA = {
+            "Beauty": { china: 350, local: 700, kg: 0.15, cbm: 0.001, duty: 20, opt: 2500, cpa: 600, pack: 40, insight: "💄 High volume, low shipping costs. Market is saturated (high CPA). Impulse buys lead to medium RTO rates." },
+            "Fashion": { china: 800, local: 1700, kg: 0.5, cbm: 0.003, duty: 15, opt: 4800, cpa: 850, pack: 60, insight: "👗 Average shipping costs, but sizing issues cause the highest RTO rates. Requires aggressive marketing budgets." },
+            "Electronics": { china: 2800, local: 5500, kg: 0.25, cbm: 0.001, duty: 25, opt: 15000, cpa: 1500, pack: 100, insight: "📱 High ticket sizes require massive liquid cash flow. RTO rates are lower, but you will pay the highest Customs Duties." },
+            "Furniture": { china: 5200, local: 9500, kg: 3.5, cbm: 0.035, duty: 10, opt: 35000, cpa: 3000, pack: 250, insight: "🛋️ Highly bulky. Air freight destroys margins. Demand is inelastic. Very low RTO rates." },
+            "Sports": { china: 1200, local: 2500, kg: 0.8, cbm: 0.006, duty: 15, opt: 8000, cpa: 1000, pack: 80, insight: "⚽ Bulky items increase local courier costs. Steady year-round demand with moderate RTOs." },
+            "Supplements": { china: 1800, local: 3200, kg: 0.35, cbm: 0.002, duty: 20, opt: 9500, cpa: 1200, pack: 50, insight: "💊 High recurring revenue, but high CPA due to ad compliance. Extremely low RTO rate." }
+        };
+
+        const COURIERS = { 
+            "Premium": { ship: 250, rtoRate: 0.08, rtoPen: 200, holdback: 0.15 }, 
+            "Standard": { ship: 150, rtoRate: 0.15, rtoPen: 150, holdback: 0.45 }, 
+            "Economy": { ship: 120, rtoRate: 0.22, rtoPen: 100, holdback: 0.75 } 
+        };
+
+        const UX_DESCRIPTIONS = {
+            "Guest (1-Click)": "Guest checkout guarantees the highest possible conversion rates from impulse buyers. However, without verifying buyer intent, your store becomes highly vulnerable to prank orders and fake addresses. Consequently, while top-line revenue looks impressive, this option triggers the highest Return-to-Origin (RTO) rates.",
+            "Account Required": "Requiring an account introduces a moderate layer of friction. This extra step naturally weeds out the most impulsive buyers. While you will see a noticeable drop in conversion rate, the quality of your orders will be significantly higher, and you can build a CRM database.",
+            "OTP Mandatory": "A Mandatory OTP verification step is the most aggressive form of friction. This stringent barrier will absolutely decimate your impulse sales, drastically inflating your CAC. However, it ensures every order is from a high-intent buyer, resulting in incredibly low RTO penalties and lean logistics."
+        };
+
+        function PerformanceChart({ results }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            useEffect(() => {
+                if(chartInstance.current) chartInstance.current.destroy();
+                if(!results || results.length === 0) return;
+                const ctx = chartRef.current.getContext('2d');
+                chartInstance.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: results.map(r => `Mod ${r[2]}`),
+                        datasets: [
+                            { label: 'Net Cash Flow (Rs)', data: results.map(r => r[12]), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+                            { label: 'Brand Score', data: results.map(r => r[13]), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.4, yAxisID: 'y1' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', grid: {drawOnChartArea: false} } } }
+                });
+            }, [results]);
+            return <div style={{height: '300px'}}><canvas ref={chartRef}></canvas></div>;
+        }
+
+        function App() {
+            const [view, setView] = useState("auth"); const [authTab, setAuthTab] = useState(0); const [navTab, setNavTab] = useState(0);
+            const [status, setStatus] = useState("idle"); const [user, setUser] = useState(null);
+            const [minimized, setMinimized] = useState(false);
+            const [form, setForm] = useState({ rollNo: "", email: "", password: "", ceoName: "", companyName: "", niche: "Beauty" });
+            
+            const [m1, setM1] = useState({ method: "Local", courier: "Standard", qty: 0, budget: 0, gVal: "", cif: "", duty: "", gstV: "", gstP: "", landed: "", trueU: "", price: 0, gross: "", op: "" });
+            const [m2, setM2] = useState({ useBridge: false, bridgeMethod: "Local", bridgeQty: 0, recurringModel: "", trialStrategy: "", churnStrategy: "", subDiscount: 10 });
+            const [m3, setM3] = useState({ prepaidTarget: 0, checkoutUX: "Guest (1-Click)", foggStrategy: "", asymmetryScript: "", cccStrategy: "", useWinBack: false });
+
+            useEffect(() => {
+                const saved = localStorage.getItem('student_creds');
+                if(saved) {
+                    const creds = JSON.parse(saved);
+                    setForm(f => ({...f, email: creds.email, password: creds.password}));
+                    handleAuth(true, creds.email, creds.password);
+                }
+            }, []);
+
+            const handleAuth = async (isLogin, em = form.email, pw = form.password) => {
+                setStatus("loading");
+                try {
+                    if(isLogin) {
+                        const res = await fetch(`${SCRIPT_URL}?action=login&email=${encodeURIComponent(em)}&password=${encodeURIComponent(pw)}`).then(r => r.json());
+                        if(res.status === "success") { 
+                            res.data.module = parseInt(res.data.module, 10);
+                            setUser(res.data); 
+                            
+                            // If they have a pending decision, pre-fill the form so they can edit it easily
+                            if (res.data.pendingDecision) {
+                                const pd = res.data.pendingDecision;
+                                let mMethod = pd.method;
+                                let useBridge = false; let bridgeMethod = "Local";
+                                
+                                if (mMethod.includes(" / ")) {
+                                    useBridge = true;
+                                    mMethod = mMethod.split(" / ")[0];
+                                    bridgeMethod = pd.method.split(" / ")[1] || "Local";
+                                }
+                                
+                                let ux = "Guest (1-Click)", prep = 0, wb = false, ccc = pd.recurringModel;
+                                if (res.data.module === 3 && pd.recurringModel.startsWith("[")) {
+                                    const m = pd.recurringModel.match(/\[UX: (.*?) \| Prepaid: (\d+)% \| WinBack: (YES|NO)\] CCC: (.*)/);
+                                    if (m) { ux = m[1]; prep = parseInt(m[2]); wb = (m[3]==='YES'); ccc = m[4]; }
+                                }
+
+                                setM1({ method: mMethod, courier: pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
+                                setM2({ useBridge, bridgeMethod, bridgeQty: 0, recurringModel: pd.recurringModel, trialStrategy: pd.trialStrategy, churnStrategy: pd.churnStrategy, subDiscount: pd.subDiscount });
+                                setM3({ prepaidTarget: prep, checkoutUX: ux, foggStrategy: pd.trialStrategy, asymmetryScript: pd.churnStrategy, cccStrategy: ccc, useWinBack: wb });
+                                
+                            } else if (res.data.module > 1 && res.data.lastBudget) {
+                                setM1(prev => ({...prev, budget: res.data.lastBudget, price: res.data.lastPrice}));
+                            }
+                            
+                            setView("dashboard");
+                            localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
+                        } else { alert(res.message); localStorage.removeItem('student_creds'); }
+                    } else { 
+                        if (!/^(BSMT|MSMT|BMST)\d{5}$/i.test(form.rollNo)) return alert("Invalid Roll No.");
+                        if (!form.email.endsWith("@itu.edu.pk")) return alert("Email must end in @itu.edu.pk");
+                        await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams({action: "register", ...form}) });
+                        alert("Incorporated! Please Login."); setAuthTab(0); 
+                    }
+                } catch (e) { alert("Connection Error."); }
+                setStatus("idle");
+            };
+
+            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
+            const cleanNum = (val) => val.replace(/[^0-9.]/g, '');
+
+            const submit = async () => {
+                if(!m1.landed || !m1.trueU || !m1.price) return alert("Complete the manual calculations.");
+                
+                if (user.module == 2) {
+                    if ((m2.recurringModel || "").trim().length < 50 || (m2.trialStrategy || "").trim().length < 50 || (m2.churnStrategy || "").trim().length < 50) {
+                        return alert("Error: All CEO Strategy text boxes must be at least 50 characters long to submit.");
+                    }
+                }
+
+                if (user.module == 3) {
+                    if ((m3.foggStrategy || "").trim().length < 50 || (m3.asymmetryScript || "").trim().length < 50 || (m3.cccStrategy || "").trim().length < 50) {
+                        return alert("Error: You must academically justify all three of your Module 3 decisions with at least 50 characters each.");
+                    }
+                }
+
+                const s = NICHE_DATA[user.niche];
+                const actualCpa = s.cpa * (user.module >= 2 ? 1.5 : 1.0);
+                
+                let winBackCost = 0;
+                if (user.module == 3 && m3.useWinBack) {
+                    const m2ResultRecord = user.results.find(r => r[2] == 2);
+                    const m2Delivered = m2ResultRecord ? parseInt(m2ResultRecord[7] || 0) : 0;
+                    const baseActiveSubscribers = m2ResultRecord ? parseInt(m2ResultRecord[15] || 0) : 0;
+                    const churnedCustomers = Math.max(0, m2Delivered - baseActiveSubscribers);
+                    winBackCost = churnedCustomers * Math.floor(actualCpa * 1.5);
+                }
+
+                const lastRev = user.results.length > 0 ? parseFloat(user.results[user.results.length - 1][8]) : 0;
+                const estimatedLocked = user.module > 1 ? Math.floor(lastRev * 0.15) : 0; 
+                
+                // If editing, add back the old landed cost to their visual equity check so they don't get double charged
+                const baseLiquid = parseInt(user.cash) - estimatedLocked;
+                const oldLandedCost = user.pendingDecision ? parseFloat(user.pendingDecision.landed) : 0;
+                const liquidCashAvailable = baseLiquid + oldLandedCost; 
+
+                const eq = liquidCashAvailable - parseFloat(m1.landed) - parseFloat(m1.budget) - winBackCost;
+                if(eq < 0) return alert("Insufficient Liquid Cash! Order exceeds available funds after courier holdbacks.");
+                
+                setStatus("busy");
+                const finalMethod = (user.module == 2 && m2.useBridge) ? m1.method + " / " + m2.bridgeMethod : m1.method;
+                const finalQty = (user.module == 2 && m2.useBridge) ? parseInt(m1.qty) + parseInt(m2.bridgeQty) : m1.qty;
+
+                let payload = {
+                    action: "submitDecision", companyId: user.companyId, module: user.module,
+                    method: finalMethod, courier: m1.courier, qty: finalQty, marketingBudget: m1.budget,
+                    gVal: m1.gVal, cif: m1.cif, duty: m1.duty, gstV: m1.gstV, gstP: m1.gstP,
+                    totalLanded: m1.landed, trueU: m1.trueU, price: m1.price, grossMargin: m1.gross, opMargin: m1.op,
+                    effectiveAvail: getProj().effectiveAvailForBackend
+                };
+
+                if (user.module == 2) {
+                    payload.recurringModel = m2.recurringModel.trim();
+                    payload.trialStrategy = m2.trialStrategy.trim();
+                    payload.churnStrategy = m2.churnStrategy.trim();
+                    payload.subDiscount = m2.subDiscount;
+                } else if (user.module == 3) {
+                    payload.recurringModel = `[UX: ${m3.checkoutUX} | Prepaid: ${m3.prepaidTarget}% | WinBack: ${m3.useWinBack ? 'YES' : 'NO'}] CCC: ${m3.cccStrategy.trim()}`;
+                    payload.trialStrategy = m3.foggStrategy.trim(); 
+                    payload.churnStrategy = m3.asymmetryScript.trim(); 
+                    payload.subDiscount = 0;
+                }
+
+                await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
+                
+                // Update local state to reflect submission lock
+                setUser({...user, hasSubmittedCurrentModule: true, pendingDecision: { landed: m1.landed }});
+                alert(`Strategy for Module ${user.module} successfully submitted!`); 
+                setStatus("idle");
+            };
+
+            const getProj = () => {
+                if(!m1.price) return { demand: 0, dispatched: 0, effectiveAvailForBackend: 0, m2Avail: 0, m3Avail: 0, rev: 0, prof: 0, actualCpa: 0, codRev: 0, prepaidRev: 0 };
+                const s = NICHE_DATA[user.niche]; const c = COURIERS[m1.courier]; 
+                
+                const m2CpaMultiplier = user.module == 2 ? 1.5 : 1.0;
+                const actualCpa = s.cpa * m2CpaMultiplier;
+                
+                const organicBase = user.module == 2 ? Math.floor(user.brand * 4.0) : 0; 
+                const budgetBase = Math.floor((parseFloat(m1.budget) || 0) / actualCpa);
+                const totalBaseTraffic = organicBase + budgetBase;
+                
+                const priceElasticity = Math.pow((s.opt / m1.price), 1.8);
+                const boundedElasticity = Math.min(3.0, priceElasticity); 
+                
+                let m3DemandMultiplier = 1.0;
+                let finalRtoRate = c.rtoRate;
+
+                if (user.module == 3) {
+                    let uxRtoMod = 1.0;
+                    if (m3.checkoutUX === "Guest (1-Click)") { m3DemandMultiplier = 1.0; uxRtoMod = 1.5; }
+                    else if (m3.checkoutUX === "Account Required") { m3DemandMultiplier = 0.85; uxRtoMod = 0.9; }
+                    else if (m3.checkoutUX === "OTP Mandatory") { m3DemandMultiplier = 0.65; uxRtoMod = 0.2; }
+
+                    const prepaidFriction = 1 - (m3.prepaidTarget / 100) * 0.25; 
+                    m3DemandMultiplier *= prepaidFriction;
+
+                    const codShare = 1 - (m3.prepaidTarget / 100);
+                    const codRateDecimal = Math.max(0.65, 0.95 - (user.brand / 150) * 0.30);
+                    
+                    finalRtoRate = (c.rtoRate * codRateDecimal) * uxRtoMod * codShare;
+                    finalRtoRate = Math.min(0.80, finalRtoRate); 
+                }
+
+                const demand = Math.floor(totalBaseTraffic * boundedElasticity * (user.brand / 100) * m3DemandMultiplier);
+                
+                const primaryQty = parseInt(m1.qty) || 0;
+                const bridgeQty = (user.module == 2 && m2.useBridge) ? (parseInt(m2.bridgeQty) || 0) : 0;
+                
+                let m2Primary = primaryQty; let m3Primary = 0;
+                if (user.module == 2) {
+                    if (m1.method === "China_Sea") { m2Primary = 0; m3Primary = primaryQty; }
+                    else if (m1.method === "China_Air") { m2Primary = Math.floor(primaryQty * 0.5); m3Primary = primaryQty - m2Primary; }
+                }
+                
+                let m2Bridge = bridgeQty; let m3Bridge = 0;
+                if (user.module == 2 && m2.useBridge) {
+                    if (m2.bridgeMethod === "China_Air") { m2Bridge = Math.floor(bridgeQty * 0.5); m3Bridge = bridgeQty - m2Bridge; }
+                }
+                
+                const m2Avail = parseInt(user.inventory) + m2Primary + m2Bridge; 
+                const m3Avail = m3Primary + m3Bridge; 
+                const effectiveAvailForBackend = user.module == 3 ? primaryQty : (m2Primary + m2Bridge); 
+                
+                const totalBatchAvail = parseInt(user.inventory) + primaryQty + bridgeQty;
+                const dispatched = Math.min(demand, totalBatchAvail); 
+                
+                const deliveredUnits = Math.floor(dispatched * (1 - finalRtoRate));
+                const rtoUnits = dispatched - deliveredUnits;
+                
+                const unitTrueCost = parseFloat(m1.trueU) || 0;
+                const effectivePrice = user.module == 2 ? m1.price * (1 - m2.subDiscount/100) : m1.price;
+                const rev = deliveredUnits * effectivePrice;
+
+                const codShare = user.module == 3 ? (1 - m3.prepaidTarget / 100) : 1.0;
+                const prepaidShare = user.module == 3 ? (m3.prepaidTarget / 100) : 0;
+                const codRev = rev * codShare;
+                const prepaidRev = rev * prepaidShare;
+                
+                const cogs = deliveredUnits * unitTrueCost; 
+                const marketingCost = budgetBase * actualCpa; 
+                const shippingCost = (deliveredUnits * c.ship) + (rtoUnits * (c.ship + c.rtoPen));
+                const packCostTotal = dispatched * s.pack;
+                const gatewayTotal = rev * 0.025;
+
+                return { demand, dispatched, effectiveAvailForBackend, m2Avail, m3Avail, rev, prof: rev - cogs - marketingCost - shippingCost - packCostTotal - gatewayTotal, actualCpa, codRev, prepaidRev };
+            };
+
+            if (view === "dashboard" && user) {
+                const s = NICHE_DATA[user.niche]; const c = COURIERS[m1.courier]; const p = getProj();
+                
+                const localMultiplier = (user.module == 3) ? 1.4 : 1.0; 
+                const baseCost = m1.method === "Local" ? Math.floor(s.local * localMultiplier) : s.china;
+                
+                const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
+                const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value"; 
+
+                const unitTrueCost = parseFloat(m1.trueU) || 0;
+                
+                const m2ResultRecord = user.results.find(r => r[2] == 2);
+                const m2Delivered = m2ResultRecord ? parseInt(m2ResultRecord[7] || 0) : 0;
+                const baseActiveSubscribers = m2ResultRecord ? parseInt(m2ResultRecord[15] || 0) : 0;
+                const churnedCustomers = Math.max(0, m2Delivered - baseActiveSubscribers);
+                
+                const retentionRate = m2Delivered > 0 ? Math.round((baseActiveSubscribers / m2Delivered) * 100) : 0;
+                const churnRate = m2Delivered > 0 ? Math.round((churnedCustomers / m2Delivered) * 100) : 0;
+
+                const winBackCost = churnedCustomers * Math.floor(p.actualCpa * 1.5);
+                const recoveredCustomers = Math.floor(churnedCustomers * 0.4);
+                const finalSubscribers = (user.module == 3 && m3.useWinBack) ? baseActiveSubscribers + recoveredCustomers : baseActiveSubscribers;
+
+                const guaranteedRevenue = finalSubscribers * m1.price;
+                const guaranteedCogs = finalSubscribers * unitTrueCost;
+                const guaranteedShip = finalSubscribers * c.ship;
+                const guaranteedPack = finalSubscribers * s.pack;
+                const guaranteedGateway = guaranteedRevenue * 0.025;
+                const guaranteedProfit = guaranteedRevenue - guaranteedCogs - guaranteedShip - guaranteedPack - guaranteedGateway;
+
+                const appliedWinBackPenalty = (user.module == 3 && m3.useWinBack) ? winBackCost : 0;
+                
+                const lastRev = user.results.length > 0 ? parseFloat(user.results[user.results.length - 1][8]) : 0;
+                const estimatedLocked = user.module > 1 ? Math.floor(lastRev * 0.15) : 0; 
+                
+                // Add back old landed cost if in edit mode so equity reflects true purchasing power
+                const baseLiquid = parseInt(user.cash) - estimatedLocked;
+                const oldLandedCost = user.pendingDecision && !user.hasSubmittedCurrentModule ? parseFloat(user.pendingDecision.landed) : 0;
+                const liquidCashAvailable = baseLiquid + oldLandedCost;
+
+                const remainingAfterBudget = liquidCashAvailable - (parseFloat(m1.landed) || 0) - (parseFloat(m1.budget) || 0) - appliedWinBackPenalty;
+
+                const codRateDecimal = Math.max(0.65, 0.95 - (user.brand / 150) * 0.30);
+                const dynamicCodPercent = Math.round(codRateDecimal * 100);
+
+                const forcedPrepaidDecimal = m3.prepaidTarget / 100;
+                const actualCodShare = Math.max(0, codRateDecimal - forcedPrepaidDecimal); 
+                
+                const totalGrossCodRevenue = p.rev * actualCodShare; 
+                const projectedLockedCash = totalGrossCodRevenue * c.holdback;
+                
+                const totalProjectedProfit = (user.module == 3 ? p.prof + guaranteedProfit : p.prof);
+                const liquidCashInflow = totalProjectedProfit - projectedLockedCash;
+
+                const isStrategyIncomplete = (user.module == 2 && ((m2.recurringModel || "").trim().length < 50 || (m2.trialStrategy || "").trim().length < 50 || (m2.churnStrategy || "").trim().length < 50)) || 
+                                             (user.module == 3 && ((m3.foggStrategy || "").trim().length < 50 || (m3.asymmetryScript || "").trim().length < 50 || (m3.cccStrategy || "").trim().length < 50));
+
+                return (
+                    <ThemeProvider theme={theme}><CssBaseline />
+                        <Container maxWidth="xl" sx={{ pt: 4, pb: 20 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                                <div>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text">
+                                        <Icon sx={{fontSize: 32, color: '#3b82f6'}}>dashboard</Icon> {user.companyName} <span style={{fontSize:'18px', color:'#94a3b8'}}>| Mod {user.module >= 4 ? "3 (Completed)" : user.module}</span>
+                                    </Typography>
+                                    <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
+                                </div>
+                                <Box display="flex" alignItems="center" gap={2}>
+                                    <Box textAlign="right" display="flex" gap={3} p={1.5} sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)'}}>
+                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 3}}>
+                                            <Typography variant="caption" color="text.secondary" display="block">Current Stock</Typography>
+                                            <Typography variant="h6" className="mono" color="#1e293b" lineHeight={1}>{user.inventory} Units</Typography>
+                                        </Box>
+                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 3}}>
+                                            <Typography variant="caption" color="text.secondary" display="block">Brand Score</Typography>
+                                            <Typography variant="h6" className="mono" color="#8b5cf6" lineHeight={1}>{user.brand} / 150</Typography>
+                                        </Box>
+                                        <Box textAlign="left">
+                                            <Typography variant="caption" color="text.secondary" display="block">Total Equity</Typography>
+                                            <Typography variant="h6" className="mono" color="#1e293b" lineHeight={1}>Rs {parseInt(user.cash).toLocaleString()}</Typography>
+                                        </Box>
+                                        <Box textAlign="left">
+                                            <Typography variant="caption" color="error.main" display="block">Locked in Transit (COD)</Typography>
+                                            <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {estimatedLocked.toLocaleString()}</Typography>
+                                        </Box>
+                                        <Box textAlign="left" sx={{borderLeft: '2px solid #10b981', pl: 3}}>
+                                            <Typography variant="caption" color="#10b981" fontWeight="bold" display="block">Liquid Cash Available</Typography>
+                                            <Typography variant="h5" className="mono" color={remainingAfterBudget >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {remainingAfterBudget.toLocaleString()}</Typography>
+                                        </Box>
+                                    </Box>
+                                    <Button variant="contained" color="error" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{height: 'fit-content'}}>Logout</Button>
+                                </Box>
+                            </Box>
+
+                            <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)} sx={{mb:3}}>
+                                <Tab icon={<Icon sx={{fontSize: 20}}>build_circle</Icon>} iconPosition="start" label="Operations & Strategy" />
+                                <Tab icon={<Icon sx={{fontSize: 20}}>insights</Icon>} iconPosition="start" label="Historical Performance" />
+                            </Tabs>
+
+                            {navTab === 0 && user.module >= 4 && (
+                                <div className="m3-card" style={{textAlign: 'center', padding: '80px 20px', border: '2px dashed rgba(139, 92, 246, 0.5)'}}>
+                                    <Icon sx={{fontSize: 80, color: '#8b5cf6', mb: 2}}>lock</Icon>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" mb={2}>Module 4 is Locked</Typography>
+                                    <Typography variant="body1" color="#475569" mb={4} maxWidth="600px" mx="auto">
+                                        Congratulations on completing Module 3! The Board of Directors is currently reviewing your UX and Financial metrics. Module 4 will be unlocked by your instructor.
+                                    </Typography>
+                                    <Button variant="contained" size="large" onClick={() => setNavTab(1)} startIcon={<Icon>insights</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5}}>
+                                        View Your Results
+                                    </Button>
+                                </div>
+                            )}
+
+                            {navTab === 0 && user.hasSubmittedCurrentModule && user.module <= 3 && (
+                                <div className="m3-card" style={{textAlign: 'center', padding: '80px 20px', border: '2px dashed rgba(59, 130, 246, 0.5)'}}>
+                                    <Icon sx={{fontSize: 80, color: '#3b82f6', mb: 2}}>hourglass_empty</Icon>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" mb={2}>Decision Locked & Awaiting Processing</Typography>
+                                    <Typography variant="body1" color="#475569" mb={4} maxWidth="600px" mx="auto">
+                                        Your strategy for Module {user.module} has been securely submitted. The simulation engine is waiting for the instructor to process the batch.
+                                    </Typography>
+                                    <Box display="flex" gap={2} justifyContent="center">
+                                        <Button variant="outlined" size="large" onClick={() => setUser({...user, hasSubmittedCurrentModule: false})} startIcon={<Icon>edit</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5, background: 'rgba(255,255,255,0.8)'}}>
+                                            Edit Decision
+                                        </Button>
+                                        <Button variant="contained" size="large" onClick={() => setNavTab(1)} startIcon={<Icon>insights</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5}}>
+                                            Review Past Results
+                                        </Button>
+                                    </Box>
+                                </div>
+                            )}
+
+                            {navTab === 0 && user.module <= 3 && !user.hasSubmittedCurrentModule && (
+                                <Grid container spacing={4}>
+                                    
+                                    <Grid item xs={12} md={4}>
+                                        <Box className="sidebar">
+                                            <div className="m3-card">
+                                                <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>inventory_2</Icon> DYNAMIC DOSSIER: {user.niche}</Typography>
+                                                <div className="data-row" style={{marginTop: '10px'}}>
+                                                    <Typography variant="body2">Unit Cost (FOB)</Typography>
+                                                    <Typography className="mono" color={user.module == 3 && m1.method === 'Local' ? 'error.main' : 'inherit'}>
+                                                        Rs {baseCost} {user.module == 3 && m1.method === 'Local' ? '(+40% Shock)' : ''}
+                                                    </Typography>
+                                                </div>
+                                                <div className="data-row"><Typography variant="body2">Weight / Volume</Typography><Typography className="mono">{s.kg}KG / {s.cbm}CBM</Typography></div>
+                                                <div className="data-row"><Typography variant="body2" fontWeight="bold">Active Freight Rate</Typography><Typography className="mono" fontWeight="bold">{freightDisplay}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Insurance Cost</Typography><Typography className="mono">{insuranceDisplay}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Import Duty / GST Rate</Typography><Typography className="mono">{m1.method === "Local" ? "0%" : `${s.duty}%`} / 18%</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Agent / Misc Fees</Typography><Typography className="mono">{m1.method === "Local" ? "Rs 0" : "Rs 12,800 / Rs 10k"}</Typography></div>
+                                                
+                                                <Divider sx={{my:2}}/>
+                                                <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>local_shipping</Icon> FULFILLMENT & CCC: {m1.courier}</Typography>
+                                                <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2" color="secondary" fontWeight="bold">Current Base CAC</Typography><Typography className="mono" fontWeight="bold">Rs {p.actualCpa}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Courier Delivery Cost</Typography><Typography className="mono">Rs {c.ship}</Typography></div>
+                                                <div className="data-row"><Typography variant="body2">Pack & Gateway Fee</Typography><Typography className="mono">Rs {s.pack} / 2.5%</Typography></div>
+                                                <div className="data-row"><Typography variant="body2" color="error.main">Est. COD RTO Penalty</Typography><Typography className="mono" color="error.main">{(c.rtoRate * 100).toFixed(0)}% / Rs {c.rtoPen}</Typography></div>
+                                                <div className="data-row" style={{background: 'rgba(245, 158, 11, 0.1)', padding: '4px'}}><Typography variant="body2" color="#d97706" fontWeight="bold">COD Cash Holdback</Typography><Typography className="mono" color="#d97706" fontWeight="bold">{(c.holdback * 100).toFixed(0)}% Locked</Typography></div>
+                                            </div>
+
+                                            <div className="m3-card">
+                                                <Typography variant="h6" mb={3} className="icon-text"><Icon color="primary">settings</Icon> 1. Strategic Configuration</Typography>
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={12}>
+                                                        <TextField select fullWidth size="small" label="Sourcing Method" value={m1.method} onChange={e=>setM1({...m1, method: e.target.value})} disabled={status === "busy"}><MenuItem value="Local">Local</MenuItem><MenuItem value="China_Air">China Air</MenuItem><MenuItem value="China_Sea">China Sea</MenuItem></TextField>
+                                                    </Grid>
+                                                    
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="caption" color="text.secondary">Order Quantity</Typography>
+                                                        <Stack direction="row" spacing={2} alignItems="center">
+                                                            <Slider value={Number(m1.qty)||0} min={0} max={5000} onChange={(e,v)=>setM1({...m1, qty: v})} disabled={status === "busy"} />
+                                                            <TextField type="text" size="small" value={m1.qty} onChange={e=>setM1({...m1, qty: cleanNum(e.target.value)})} sx={{width: '90px'}} disabled={status === "busy"} />
+                                                        </Stack>
+                                                    </Grid>
+
+                                                    <Grid item xs={12}>
+                                                        <FormControlLabel 
+                                                            control={<Switch checked={m2.useBridge} onChange={e=>setM2({...m2, useBridge: e.target.checked})} disabled={status === "busy"}/>} 
+                                                            label={<Typography variant="body2">Simultaneous Sourcing (Bridge)</Typography>} 
+                                                        />
+                                                        {m2.useBridge && (
+                                                            <Box sx={{p: 2, background: 'rgba(59,130,246,0.1)', borderRadius: 2, mt: 1}}>
+                                                                <TextField select fullWidth size="small" label="Bridge Method" value={m2.bridgeMethod} onChange={e=>setM2({...m2, bridgeMethod: e.target.value})} disabled={status === "busy"}>
+                                                                    <MenuItem value="Local">Local</MenuItem>
+                                                                    <MenuItem value="China_Air">China Air</MenuItem>
+                                                                </TextField>
+                                                                <Stack direction="row" spacing={2} alignItems="center" mt={2}>
+                                                                    <Slider value={Number(m2.bridgeQty)||0} min={0} max={1000} onChange={(e,v)=>setM2({...m2, bridgeQty: v})} disabled={status === "busy"} />
+                                                                    <TextField type="text" size="small" value={m2.bridgeQty} onChange={e=>setM2({...m2, bridgeQty: cleanNum(e.target.value)})} sx={{width: '80px'}} disabled={status === "busy"} />
+                                                                </Stack>
+                                                            </Box>
+                                                        )}
+                                                    </Grid>
+
+                                                    <Grid item xs={12}>
+                                                        <TextField select fullWidth size="small" label="Courier Partner" value={m1.courier} onChange={e=>setM1({...m1, courier: e.target.value})} disabled={status === "busy"}>{Object.keys(COURIERS).map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="caption" color="text.secondary">Marketing Budget (PKR)</Typography>
+                                                        <Stack direction="row" spacing={2} alignItems="center">
+                                                            <Slider value={Number(m1.budget)||0} min={0} max={liquidCashAvailable > 0 ? liquidCashAvailable : 100000} onChange={(e,v)=>setM1({...m1, budget: v})} disabled={status === "busy"} />
+                                                            <TextField type="text" size="small" value={m1.budget} onChange={e=>setM1({...m1, budget: cleanNum(e.target.value)})} sx={{width: '90px'}} disabled={status === "busy"} />
+                                                        </Stack>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="caption" color="text.secondary">Retail Price (PKR)</Typography>
+                                                        <Stack direction="row" spacing={2} alignItems="center">
+                                                            <Slider value={Number(m1.price)||0} min={0} max={s.opt * 3} onChange={(e,v)=>setM1({...m1, price: v})} disabled={status === "busy"} />
+                                                            <TextField type="text" size="small" value={m1.price} onChange={e=>setM1({...m1, price: cleanNum(e.target.value)})} sx={{width: '90px'}} disabled={status === "busy"} />
+                                                        </Stack>
+                                                    </Grid>
+                                                </Grid>
+                                            </div>
+
+                                            <div className="m3-card">
+                                                <Typography variant="h6" mb={2} fontSize="1rem" className="icon-text"><Icon color="primary">calculate</Icon> 2. Procure-to-Pay</Typography>
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="Total Goods" value={m1.gVal} onChange={e=>setM1({...m1, gVal: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="CIF Value" value={m1.cif} onChange={e=>setM1({...m1, cif: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="Duty Paid" value={m1.duty} onChange={e=>setM1({...m1, duty: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="Val for GST" value={m1.gstV} onChange={e=>setM1({...m1, gstV: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="GST Paid" value={m1.gstP} onChange={e=>setM1({...m1, gstP: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="TOTAL LANDED" value={m1.landed} onChange={e=>setM1({...m1, landed: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={12}><TextField fullWidth size="small" label="TRUE LANDED (Per Unit)" value={m1.trueU} onChange={e=>setM1({...m1, trueU: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="Gross Margin %" value={m1.gross} onChange={e=>setM1({...m1, gross: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                    <Grid item xs={6}><TextField fullWidth size="small" label="Op Margin %" value={m1.op} onChange={e=>setM1({...m1, op: cleanNum(e.target.value)})} disabled={status === "busy"} /></Grid>
+                                                </Grid>
+                                            </div>
+                                        </Box>
+                                    </Grid>
+                                    
+                                    <Grid item xs={12} md={8}>
+                                        
+                                        {user.module == 1 && (
+                                            <div className="m3-card">
+                                                <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>rocket_launch</Icon> MODULE 1 SCENARIO: THE COLD START</Typography>
+                                                <Typography variant="body1" sx={{mt: 1}}>You have Rs 1,000,000 in equity and zero customers. Your goal is to launch your brand, secure inventory, and build an Atomic Network. Configure your strategy on the left to penetrate the market.</Typography>
+                                            </div>
+                                        )}
+
+                                        {user.module == 2 && (
+                                            <div className="m3-card" style={{border: '1px solid rgba(139, 92, 246, 0.4)'}}>
+                                                <Typography variant="overline" color="#8b5cf6" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>warning_amber</Icon> MACRO SHOCK: THE RECURRING SQUEEZE</Typography>
+                                                <Typography variant="body2" sx={{mt: 1, mb: 3}}>Warehouse rents have doubled. RTOs are spiking. Advertising (CAC) has instantly become <b>50% more expensive</b>. Traditional one-off sales are exhausting capital. The Board mandates you pivot a portion of your business to a <b>Recurring Revenue Model</b> to stabilize your cash flow.</Typography>
+                                                <Divider sx={{my:2}}/>
+                                                <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">edit_note</Icon> CEO Strategy: Written Briefing</Typography>
+                                                
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>1. Recurring Revenue Architecture</Typography>
+                                                <TextField fullWidth multiline rows={3} placeholder="What is your recurring model? Pitch your exact offer." value={m2.recurringModel} onChange={e=>setM2({...m2, recurringModel: e.target.value})} sx={{mb: 3}} helperText={m2.recurringModel ? `${m2.recurringModel.trim().length} / 50 characters min` : ""} error={m2.recurringModel && m2.recurringModel.trim().length < 50} />
+                                                
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>2. Acquisition & Trial Strategy</Typography>
+                                                <TextField fullWidth multiline rows={2} placeholder="How will you overcome checkout friction to acquire subscribers?" value={m2.trialStrategy} onChange={e=>setM2({...m2, trialStrategy: e.target.value})} sx={{mb: 3}} helperText={m2.trialStrategy ? `${m2.trialStrategy.trim().length} / 50 characters min` : ""} error={m2.trialStrategy && m2.trialStrategy.trim().length < 50} />
+                                                
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>3. Churn Mitigation & 10x Value</Typography>
+                                                <TextField fullWidth multiline rows={3} placeholder="What is your 'Retention Booster' during delays?" value={m2.churnStrategy} onChange={e=>setM2({...m2, churnStrategy: e.target.value})} sx={{mb: 3}} helperText={m2.churnStrategy ? `${m2.churnStrategy.trim().length} / 50 characters min` : ""} error={m2.churnStrategy && m2.churnStrategy.trim().length < 50} />
+
+                                                <Typography variant="body2" color="text.secondary">Subscription Price Discount: {m2.subDiscount}% Off Retail Price</Typography>
+                                                <Slider value={m2.subDiscount} min={0} max={50} onChange={(e,v)=>setM2({...m2, subDiscount: v})} sx={{color: '#8b5cf6'}} />
+                                            </div>
+                                        )}
+
+                                        {user.module == 3 && (
+                                            <div className="m3-card" style={{border: '1px solid #10b981'}}>
+                                                <Typography variant="overline" color="#10b981" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>account_balance_wallet</Icon> MACRO SHOCK: THE COD CASH CRUNCH</Typography>
+                                                <Typography variant="body2" sx={{mt: 1, mb: 3}}>
+                                                    Don't worry if your brand score has taken a hit. There is still a long way to go and you can more than recover through your excellent analysis and strategy. Now to this module. Your audience is growing, but because of your current Brand Score of {user.brand}, <b>{dynamicCodPercent}% of your new cold-traffic orders are Cash-on-Delivery (COD)</b>. Fake orders and impulsive buyers are causing massive Return-to-Origin (RTO) spikes, bleeding your working capital. <br/><br/>
+                                                    Additionally, local manufacturers are facing raw material shortages, driving up <b>Local Sourcing FOB costs by 40%</b>. The Board has ordered you to audit your checkout friction and force more customers to use Prepaid methods (RAAST/Cards) to survive the Courier Cash Collection Cycle.
+                                                </Typography>
+
+                                                <Box sx={{background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 2, p: 2, mb: 3}}>
+                                                    <Typography variant="overline" color="#10b981" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>stars</Icon> MODULE 2 REWARD: RETENTION REVEALED</Typography>
+                                                    <Grid container spacing={2} mt={0.5}>
+                                                        <Grid item xs={3}>
+                                                            <Typography variant="caption" display="block" color="text.secondary">M2 Delivered</Typography>
+                                                            <Typography variant="h5" className="mono">{m2Delivered}</Typography>
+                                                        </Grid>
+                                                        <Grid item xs={3}>
+                                                            <Typography variant="caption" display="block" color="text.secondary">M2 Retained (0% RTO)</Typography>
+                                                            <Typography variant="h5" className="mono" color="#10b981">{baseActiveSubscribers} <span style={{fontSize:'12px'}}>({retentionRate}%)</span></Typography>
+                                                        </Grid>
+                                                        <Grid item xs={3}>
+                                                            <Typography variant="caption" display="block" color="text.secondary">M2 Churned</Typography>
+                                                            <Typography variant="h5" className="mono" color="#ef4444">{churnedCustomers} <span style={{fontSize:'12px'}}>({churnRate}%)</span></Typography>
+                                                        </Grid>
+                                                        <Grid item xs={3}>
+                                                            <Typography variant="caption" display="block" color="text.secondary">Guaranteed Profit</Typography>
+                                                            <Typography variant="h5" className="mono" color="#10b981">Rs {guaranteedProfit.toLocaleString()}</Typography>
+                                                        </Grid>
+                                                    </Grid>
+                                                    
+                                                    {churnedCustomers > 0 && (
+                                                        <Box sx={{mt: 2, p: 1.5, background: 'rgba(255,255,255,0.6)', borderRadius: 1, border: '1px solid rgba(239, 68, 68, 0.3)'}}>
+                                                            <FormControlLabel 
+                                                                control={<Switch checked={m3.useWinBack} onChange={(e)=>setM3({...m3, useWinBack: e.target.checked})} color="error" />} 
+                                                                label={<Typography variant="body2" fontWeight="bold" color="#ef4444">Launch Win-Back Campaign?</Typography>}
+                                                            />
+                                                            <Typography variant="caption" display="block" color="text.secondary" ml={4}>
+                                                                Spend <b style={{color:'#ef4444'}}>Rs {winBackCost.toLocaleString()}</b> (A brutal 1.5x Base CAC penalty) from your Liquid Cash to aggressively email/SMS your angry M2 customers. You will recover <b>{recoveredCustomers}</b> of them back into your Active Subscribers pool for M3.
+                                                            </Typography>
+                                                        </Box>
+                                                    )}
+                                                </Box>
+
+                                                <Divider sx={{my:2}}/>
+                                                <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">tune</Icon> The UX & Friction Matrix</Typography>
+                                                
+                                                <Grid container spacing={3} mb={3}>
+                                                    <Grid item xs={12} md={6}>
+                                                        <Typography variant="body2" fontWeight="bold" mb={1}>Checkout UX (Friction vs. Quality)</Typography>
+                                                        <TextField select fullWidth size="small" value={m3.checkoutUX} onChange={e=>setM3({...m3, checkoutUX: e.target.value})}>
+                                                            <MenuItem value="Guest (1-Click)">Guest Checkout (Max Demand, Max Fake Orders)</MenuItem>
+                                                            <MenuItem value="Account Required">Account Required (Medium Demand, Medium Quality)</MenuItem>
+                                                            <MenuItem value="OTP Mandatory">Mandatory OTP (Low Demand, High Quality)</MenuItem>
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} md={6}>
+                                                        <Typography variant="body2" fontWeight="bold" mb={1}>Prepaid Target ({m3.prepaidTarget}%)</Typography>
+                                                        <Typography variant="caption" color="text.secondary" display="block" mb={1}>Higher prepaid % lowers RTO, but creates massive friction (abandoned carts) if not incentivized correctly.</Typography>
+                                                        <Slider value={m3.prepaidTarget} min={0} max={100} onChange={(e,v)=>setM3({...m3, prepaidTarget: v})} sx={{color: '#10b981'}} />
+                                                    </Grid>
+                                                </Grid>
+                                                
+                                                <Box sx={{mt: 2, mb: 3, p: 2, background: 'rgba(59, 130, 246, 0.05)', borderLeft: '4px solid #3b82f6', borderRadius: 1}}>
+                                                    <Typography variant="caption" fontWeight="bold" color="primary" display="block" mb={0.5}>CEO ADVISORY: {m3.checkoutUX}</Typography>
+                                                    <Typography variant="body2" color="text.secondary" sx={{lineHeight: 1.6}}>
+                                                        {UX_DESCRIPTIONS[m3.checkoutUX]}
+                                                    </Typography>
+                                                </Box>
+
+                                                <Divider sx={{my:2}}/>
+                                                <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">school</Icon> Academic CEO Strategy</Typography>
+                                                
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>1. Checkout UX & The Fogg Behavior Model</Typography>
+                                                <TextField 
+                                                    fullWidth multiline rows={3} 
+                                                    placeholder="Using the Fogg Behavior Model (or TAM), justify your Checkout UX choice. How does your Prepaid Incentive provide enough MOTIVATION to overcome the FRICTION barrier you just created?" 
+                                                    value={m3.foggStrategy} 
+                                                    onChange={e=>setM3({...m3, foggStrategy: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m3.foggStrategy ? `${m3.foggStrategy.trim().length} / 50 characters min` : "Apply the Fogg Behavior Model"}
+                                                    error={m3.foggStrategy && m3.foggStrategy.trim().length < 50}
+                                                />
+                                                
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>2. RTO Script & Information Asymmetry</Typography>
+                                                <TextField 
+                                                    fullWidth multiline rows={3} 
+                                                    placeholder="Draft your WhatsApp RTO script. Explain how this uses Trust Proxies or Risk Reversal to reduce Information Asymmetry and verify buyer intent." 
+                                                    value={m3.asymmetryScript} 
+                                                    onChange={e=>setM3({...m3, asymmetryScript: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m3.asymmetryScript ? `${m3.asymmetryScript.trim().length} / 50 characters min` : "Apply Akerlof's Asymmetric Information theory"}
+                                                    error={m3.asymmetryScript && m3.asymmetryScript.trim().length < 50}
+                                                />
+
+                                                <Typography variant="body2" fontWeight="bold" mb={1}>3. The Cash Conversion Cycle (CCC)</Typography>
+                                                <TextField 
+                                                    fullWidth multiline rows={2} 
+                                                    placeholder="Explain your Prepaid Target %. How are you balancing the CAC penalty of abandoned carts against the Working Capital benefits of a shorter Cash Conversion Cycle?" 
+                                                    value={m3.cccStrategy} 
+                                                    onChange={e=>setM3({...m3, cccStrategy: e.target.value})} 
+                                                    sx={{mb: 3}} 
+                                                    helperText={m3.cccStrategy ? `${m3.cccStrategy.trim().length} / 50 characters min` : "Apply Laudon & Traver Cash Flow principles"}
+                                                    error={m3.cccStrategy && m3.cccStrategy.trim().length < 50}
+                                                />
+                                            </div>
+                                        )}
+
+                                    </Grid>
+                                </Grid>
+                            )}
+
+                            {/* FLOATING BOTTOM FORECAST BAR */}
+                            {navTab === 0 && user.module <= 3 && !user.hasSubmittedCurrentModule && (
+                                <Box className={`bottom-bar ${minimized ? 'minimized' : ''}`}>
+                                    <div className="toggle-btn" onClick={()=>setMinimized(!minimized)}>
+                                        <Icon>{minimized ? 'expand_less' : 'expand_more'}</Icon>
+                                    </div>
+                                    <Grid container spacing={3} alignItems="center">
+                                        <Grid item xs={12} md={8}>
+                                            <Typography variant="overline" color="#94a3b8" sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1, lineHeight: 1}}>
+                                                <Icon sx={{fontSize: 16}}>query_stats</Icon> BUDGET-ADJUSTED BATCH FORECAST
+                                            </Typography>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={3}>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>MAX DEMAND</Typography>
+                                                    <Typography variant="h5" className="mono" lineHeight={1}>{user.module == 3 ? (p.demand + finalSubscribers).toLocaleString() : p.demand.toLocaleString()}</Typography>
+                                                </Grid>
+                                                <Grid item xs={3}>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>BATCH FULFILLED</Typography>
+                                                    <Typography variant="h5" className="mono" lineHeight={1} color={p.dispatched < p.demand ? "#ef4444" : "inherit"}>{user.module == 3 ? (p.dispatched + finalSubscribers).toLocaleString() : p.dispatched.toLocaleString()}</Typography>
+                                                </Grid>
+                                                <Grid item xs={3}>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>TOTAL PROFIT</Typography>
+                                                    <Typography variant="h5" lineHeight={1} color={totalProjectedProfit > 0 ? "#10b981" : "#ef4444"} className="mono">Rs {totalProjectedProfit.toLocaleString()}</Typography>
+                                                </Grid>
+                                                <Grid item xs={3}>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>LIQUID CASH INFLOW <br/><span style={{fontSize:'10px', color:'#f59e0b'}}>-Rs {Math.floor(projectedLockedCash).toLocaleString()} Courier Lock</span></Typography>
+                                                    <Typography variant="h5" lineHeight={1} color={liquidCashInflow > 0 ? "#3b82f6" : "#ef4444"} className="mono">Rs {Math.floor(liquidCashInflow).toLocaleString()}</Typography>
+                                                </Grid>
+                                            </Grid>
+                                            {user.module == 2 && (p.m3Avail > 0 || p.m2Avail < p.demand) && (
+                                                <Box sx={{mt: 1.5, display: 'flex', gap: 3}}>
+                                                    <Typography variant="caption" color="#10b981" className="mono">✓ Available this month: {p.m2Avail}</Typography>
+                                                    {p.m3Avail > 0 && <Typography variant="caption" color="#f59e0b" className="mono">⏳ Deferred to next month: {p.m3Avail}</Typography>}
+                                                </Box>
+                                            )}
+                                        </Grid>
+                                        <Grid item xs={12} md={4}>
+                                            <Button variant="contained" fullWidth size="large" onClick={submit} disabled={status === "busy" || remainingAfterBudget < 0 || isStrategyIncomplete} sx={{py: 2, borderRadius: 3, fontFamily: 'Poppins', fontWeight: 700, fontSize: '1.1rem', boxShadow: '0 4px 14px rgba(59, 130, 246, 0.4)'}}>
+                                                {status === "busy" ? <CircularProgress size={24} color="inherit"/> : (remainingAfterBudget < 0 ? "Insufficient Cash" : (isStrategyIncomplete ? "Complete Academic Boxes" : (user.pendingDecision ? "Update Strategy" : `Submit Strategy`)))}
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            )}
+
+                            {/* HISTORICAL PERFORMANCE TAB */}
+                            {navTab === 1 && (
+                                <>
+                                    <div className="m3-card">
+                                        <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">show_chart</Icon> Growth Trajectory</Typography>
+                                        <PerformanceChart results={user.results} />
+                                    </div>
+                                    <div className="m3-card">
+                                        <Typography variant="h6" mb={3} className="icon-text"><Icon color="primary">receipt_long</Icon> P&L Ledger</Typography>
+                                        <div style={{overflowX: 'auto'}}>
+                                        <table style={{width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px'}}>
+                                            <thead><tr style={{borderBottom: '2px solid rgba(0,0,0,0.1)'}}><th>Mod</th><th>Dem / Deliv</th><th>RTO / Stockout</th><th>Revenue</th><th>Marketing</th><th>Shipping / Hold</th><th>Net Cash Flow</th></tr></thead>
+                                            <tbody>
+                                                {user.results.length === 0 ? <tr><td colSpan="7" style={{padding: '20px 0'}}>No simulation data yet. Complete Module 1.</td></tr> : user.results.map((r, i) => (
+                                                    <React.Fragment key={i}>
+                                                        <tr style={{height: '50px', borderBottom: '1px solid rgba(0,0,0,0.05)'}}>
+                                                            <td><b>M{r[2]}</b></td>
+                                                            <td><span style={{background:'#e0e7ff', padding:'4px 8px', borderRadius:'4px', color:'#3b82f6'}}>{r[3]}</span> / {r[7]}</td>
+                                                            <td><span style={{color: '#ef4444'}}>{r[6]} RTO</span> / <span style={{color: r[5]>0?'#ef4444':'#10b981'}}>{r[5]} Out</span></td>
+                                                            <td className="mono">Rs {parseInt(r[8]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: '#ef4444'}}>Rs {parseInt(r[9]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: '#ef4444'}}>Rs {parseInt(r[10]).toLocaleString()} / Rs {parseInt(r[11]).toLocaleString()}</td>
+                                                            <td className="mono" style={{color: r[12]>0?'#10b981':'#ef4444', fontSize: '16px'}}><b>Rs {parseInt(r[12]).toLocaleString()}</b></td>
+                                                        </tr>
+                                                        <tr style={{borderBottom: '2px solid rgba(0,0,0,0.1)'}}>
+                                                            <td colSpan="7" style={{padding: '16px', background: 'rgba(255,255,255,0.4)', borderRadius: '0 0 12px 12px'}}>
+                                                                <Typography variant="body2" color="primary"><b>✨ Instructor Feedback:</b> {r[14]}</Typography>
+                                                            </td>
+                                                        </tr>
+                                                    </React.Fragment>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </Container>
+                    </ThemeProvider>
+                );
+            }
+
+            return (
+                <ThemeProvider theme={theme}><CssBaseline />
+                    <Container maxWidth="sm" sx={{ py: 10 }}>
+                        <div className="m3-card" style={{background: 'rgba(255,255,255,0.7)'}}>
+                            <Box textAlign="center" mb={4}><Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography><Typography variant="body2" color="text.secondary">Semester Project</Typography></Box>
+                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}><Tab label="Login" /><Tab label="Register" /></Tabs>
+                            <Stack spacing={3}>
+                                {authTab === 1 && <TextField label="Roll No (e.g. BSMT22001)" fullWidth value={form.rollNo} onChange={e=>setForm({...form, rollNo:e.target.value.toUpperCase()})} />}
+                                <TextField label="Email (@itu.edu.pk)" fullWidth value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
+                                <TextField label="Password" type="password" fullWidth value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
+                                {authTab === 1 && (
+                                    <>
+                                        <TextField label="CEO Name" fullWidth value={form.ceoName} onChange={e=>setForm({...form, ceoName:e.target.value})} />
+                                        <TextField label="Company Name" fullWidth value={form.companyName} onChange={e=>setForm({...form, companyName:e.target.value})} />
+                                        <TextField select label="Business Niche" fullWidth value={form.niche} onChange={e=>setForm({...form, niche:e.target.value})}>
+                                            {Object.keys(NICHE_DATA).map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
+                                        </TextField>
+                                        <Alert severity="info" sx={{ mt: 1, borderRadius: 2, background: 'rgba(255,255,255,0.8)' }}>
+                                            <AlertTitle sx={{fontFamily: 'Poppins', fontWeight: 600}}>Niche Economic Profile</AlertTitle>
+                                            <Typography variant="body2" sx={{lineHeight: 1.5, fontFamily: 'Poppins'}}>{NICHE_DATA[form.niche].insight}</Typography>
+                                        </Alert>
+                                    </>
+                                )}
+                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(authTab===0)} disabled={status==="loading"} sx={{py: 1.5, borderRadius: 2, fontFamily: 'Poppins', fontWeight: 600}}>{status==="loading" ? <CircularProgress size={24} color="inherit"/> : (authTab===0?"Secure Login":"Incorporate Entity")}</Button>
+                            </Stack>
+                        </div>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
+    </script>
+</body>
+</html>
