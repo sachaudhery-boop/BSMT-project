@@ -130,7 +130,6 @@
         }
 
         function App() {
-            // Layout & Auth State
             const [view, setView] = useState("auth"); 
             const [authTab, setAuthTab] = useState(0); 
             const [navTab, setNavTab] = useState(0);
@@ -138,18 +137,16 @@
             const [status, setStatus] = useState("idle");
             const [user, setUser] = useState(null); 
 
-            // Form Data
             const [form, setForm] = useState({ rollNo: "", email: "", password: "", ceoName: "", companyName: "", niche: "Beauty" });
             const [m1, setM1] = useState({ method: "Local", courier: "Standard", qty: 0, budget: 0, gVal: "", cif: "", duty: "", gstV: "", gstP: "", landed: "", trueU: "", price: 0, gross: "", op: "" });
             const [m2, setM2] = useState({ useBridge: false, bridgeMethod: "Local", bridgeQty: 0, recurringModel: "", trialStrategy: "", churnStrategy: "", subDiscount: 10 });
             const [m3, setM3] = useState({ prepaidTarget: 0, checkoutUX: "Guest (1-Click)", foggStrategy: "", asymmetryScript: "", cccStrategy: "", useWinBack: false });
 
-            // Module 4 & Loan State
             const [stack, setStack] = useState([]);
             const [m4Strategy, setM4Strategy] = useState(''); 
             const [loanAmount, setLoanAmount] = useState(0);
 
-            const cleanNum = (val) => val.replace(/[^0-9.]/g, '');
+            const cleanNum = (val) => String(val).replace(/[^0-9.]/g, '');
 
             useEffect(() => {
                 const saved = localStorage.getItem('student_creds');
@@ -171,25 +168,22 @@
                             
                             if (res.data.pendingDecision) {
                                 const pd = res.data.pendingDecision;
-                                let mMethod = pd.method;
-                                let useBridge = false; let bridgeMethod = "Local";
-                                if (mMethod.includes(" / ")) {
-                                    useBridge = true; mMethod = mMethod.split(" / ")[0]; bridgeMethod = pd.method.split(" / ")[1] || "Local";
-                                }
                                 let ux = "Guest (1-Click)", prep = 0, wb = false, ccc = pd.recurringModel;
                                 if (res.data.module === 3 && pd.recurringModel.startsWith("[")) {
                                     const m = pd.recurringModel.match(/\[UX: (.*?) \| Prepaid: (\d+)% \| WinBack: (YES|NO)\] CCC: (.*)/);
                                     if (m) { ux = m[1]; prep = parseInt(m[2]); wb = (m[3]==='YES'); ccc = m[4]; }
                                 }
 
-                                setM1({ method: mMethod, courier: pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
-                                setM2({ useBridge, bridgeMethod, bridgeQty: 0, recurringModel: pd.recurringModel, trialStrategy: pd.trialStrategy, churnStrategy: pd.churnStrategy, subDiscount: pd.subDiscount });
+                                setM1({ method: pd.method, courier: pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
+                                
+                                // Safely load the Bridge variables straight from the backend
+                                const hasBridge = pd.bridgeQty > 0;
+                                setM2({ useBridge: hasBridge, bridgeMethod: pd.bridgeMethod || "Local", bridgeQty: pd.bridgeQty || 0, recurringModel: pd.recurringModel, trialStrategy: pd.trialStrategy, churnStrategy: pd.churnStrategy, subDiscount: pd.subDiscount });
+                                
                                 setM3({ prepaidTarget: prep, checkoutUX: ux, foggStrategy: pd.trialStrategy, asymmetryScript: pd.churnStrategy, cccStrategy: ccc, useWinBack: wb });
                                 
                             } else if (res.data.module > 1 && res.data.lastBudget) {
-                                // Default budget to 0 on M4 so they see organic traffic baseline first
-                                const newBudget = res.data.module >= 4 ? 0 : res.data.lastBudget;
-                                setM1(prev => ({...prev, budget: newBudget, price: res.data.lastPrice}));
+                                setM1(prev => ({...prev, budget: res.data.lastBudget, price: res.data.lastPrice}));
                             }
                             
                             setView("dashboard");
@@ -207,23 +201,11 @@
 
             const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
 
-            // Mod 4 Builder Handlers
             const addElement = (element) => { setStack([...stack, { ...element, uniqueId: Math.random() }]); };
             const removeElement = (index) => { setStack(stack.filter((_, i) => i !== index)); };
-            const moveUp = (index) => {
-                if (index === 0) return;
-                const newStack = [...stack];
-                [newStack[index - 1], newStack[index]] = [newStack[index], newStack[index - 1]];
-                setStack(newStack);
-            };
-            const moveDown = (index) => {
-                if (index === stack.length - 1) return;
-                const newStack = [...stack];
-                [newStack[index + 1], newStack[index]] = [newStack[index], newStack[index + 1]];
-                setStack(newStack);
-            };
+            const moveUp = (index) => { if (index === 0) return; const newStack = [...stack]; [newStack[index - 1], newStack[index]] = [newStack[index], newStack[index - 1]]; setStack(newStack); };
+            const moveDown = (index) => { if (index === stack.length - 1) return; const newStack = [...stack]; [newStack[index + 1], newStack[index]] = [newStack[index], newStack[index + 1]]; setStack(newStack); };
 
-            // --- DASHBOARD RENDER LOGIC ---
             if (view === "dashboard" && user) {
                 const s = NICHE_DATA[user.niche]; 
                 const c = COURIERS[m1.courier] || COURIERS["Standard"]; 
@@ -235,8 +217,7 @@
                 const m2ResultRecord = user.results ? user.results.find(r => r[2] == 2) : null;
                 const m3ResultRecord = user.results ? user.results.find(r => r[2] == 3) : null;
                 
-                let baseActiveSubscribers = 0;
-                let m2Delivered = 0;
+                let baseActiveSubscribers = 0; let m2Delivered = 0;
 
                 if (user.module >= 4 && m3ResultRecord) {
                     baseActiveSubscribers = parseInt(m3ResultRecord[15] || 0);
@@ -254,18 +235,13 @@
                 const churnRate = m2Delivered > 0 ? Math.round((churnedCustomers / m2Delivered) * 100) : 0;
 
                 const recoveredCustomers = Math.floor(churnedCustomers * 0.4);
-                
                 let finalSubscribers = baseActiveSubscribers;
-                if (user.module == 3 && m3.useWinBack) {
-                    finalSubscribers += recoveredCustomers;
-                }
+                if (user.module == 3 && m3.useWinBack) { finalSubscribers += recoveredCustomers; }
 
-                // THE PERFECTED GETPROJ FUNCTION (WITH PROFIT SPLITS & REVISED ORGANIC DEMAND)
                 const getProj = () => {
-                    if(!m1.price) return { demand: 0, dispatched: 0, effectiveAvailForBackend: 0, m2Avail: 0, m3Avail: 0, rev: 0, prof: 0, retainedRev: 0, retainedProfit: 0, newProfit: 0, lockup: 0, shippingCost: 0, packCostTotal: 0, gatewayTotal: 0 };
+                    if(!m1.price) return { demand: 0, dispatched: 0, m2Avail: 0, m3Avail: 0, rev: 0, prof: 0, codRev: 0, prepaidRev: 0, shippingCost: 0, packCostTotal: 0, gatewayTotal: 0 };
                     
-                    // 1. Demand Generation (Organic = Retained Customers / 2)
-                    const organicBase = user.module >= 2 ? Math.floor(finalSubscribers / 2) : 0; 
+                    const organicBase = user.module >= 2 ? Math.floor(user.brand * 4.0) : 0; 
                     const budgetBase = Math.floor((parseFloat(m1.budget) || 0) / actualCpa);
                     const totalBaseTraffic = organicBase + budgetBase;
                     
@@ -291,79 +267,46 @@
                         finalRtoRate = Math.min(0.80, finalRtoRate); 
                     }
 
-                    const newDemand = Math.floor(totalBaseTraffic * boundedElasticity * (user.brand / 100) * m3DemandMultiplier);
-                    const demand = user.module >= 3 ? newDemand + finalSubscribers : newDemand;
+                    const demand = Math.floor(totalBaseTraffic * boundedElasticity * (user.brand / 100) * m3DemandMultiplier);
                     
-                    // 2. Inventory Physics
+                    // --- MATH FIX: Physics Engine removes the bug ---
                     const primaryQty = parseInt(m1.qty) || 0;
-                    const bridgeQty = (user.module == 2 && m2.useBridge) ? (parseInt(m2.bridgeQty) || 0) : 0;
+                    const bridgeQty = m2.useBridge ? (parseInt(m2.bridgeQty) || 0) : 0; 
                     
                     let m2Primary = primaryQty; let m3Primary = 0;
-                    if (user.module == 2) {
-                        if (m1.method === "China_Sea") { m2Primary = 0; m3Primary = primaryQty; }
-                        else if (m1.method === "China_Air") { m2Primary = Math.floor(primaryQty * 0.5); m3Primary = primaryQty - m2Primary; }
-                    }
+                    if (m1.method === "China_Sea") { m2Primary = 0; m3Primary = primaryQty; }
+                    else if (m1.method === "China_Air") { m2Primary = Math.floor(primaryQty * 0.5); m3Primary = primaryQty - m2Primary; }
                     
                     let m2Bridge = bridgeQty; let m3Bridge = 0;
-                    if (user.module == 2 && m2.useBridge) {
+                    if (m2.useBridge) {
                         if (m2.bridgeMethod === "China_Air") { m2Bridge = Math.floor(bridgeQty * 0.5); m3Bridge = bridgeQty - m2Bridge; }
+                        else if (m2.bridgeMethod === "China_Sea") { m2Bridge = 0; m3Bridge = bridgeQty; }
                     }
                     
                     const m2Avail = parseInt(user.inventory) + m2Primary + m2Bridge; 
                     const m3Avail = m3Primary + m3Bridge; 
-                    const effectiveAvailForBackend = user.module >= 3 ? primaryQty : (m2Primary + m2Bridge); 
                     
-                    // 3. Fulfillment & The Lemon Filter
-                    const totalBatchAvail = parseInt(user.inventory) + (user.module >= 3 ? (m1.method === "Local" ? primaryQty : (m1.method === "China_Air" ? Math.floor(primaryQty * 0.5) : 0)) : primaryQty + bridgeQty);
-                    const dispatched = Math.min(demand, totalBatchAvail); 
+                    const dispatched = Math.min(demand, m2Avail); 
                     
-                    // Subscribers eat inventory first and have 0% RTO
-                    const subsDispatched = user.module >= 3 ? Math.min(finalSubscribers, dispatched) : 0;
-                    const newDispatched = Math.max(0, dispatched - subsDispatched);
+                    const deliveredUnits = Math.floor(dispatched * (1 - finalRtoRate));
+                    const rtoUnits = dispatched - deliveredUnits;
                     
-                    const rtoUnits = Math.floor(newDispatched * finalRtoRate);
-                    const newDelivered = newDispatched - rtoUnits;
-                    
-                    // 4. Unit Economics (Split by Audience)
                     const unitTrueCost = parseFloat(m1.trueU) || 0;
                     const effectivePrice = user.module == 2 ? m1.price * (1 - m2.subDiscount/100) : m1.price;
-                    
-                    // Revenues
-                    const retainedRev = subsDispatched * effectivePrice;
-                    const newRev = newDelivered * effectivePrice;
-                    const rev = retainedRev + newRev;
+                    const rev = deliveredUnits * effectivePrice;
 
-                    // Courier Lockup (Only applies to new customers paying COD)
                     const codShare = user.module >= 3 ? (1 - m3.prepaidTarget / 100) : 1.0;
-                    const newCodRev = newRev * codShare;
-                    const lockup = newCodRev * c.holdback;
+                    const prepaidShare = user.module >= 3 ? (m3.prepaidTarget / 100) : 0;
+                    const codRev = rev * codShare;
+                    const prepaidRev = rev * prepaidShare;
                     
-                    // COGS
-                    const retainedCogs = subsDispatched * unitTrueCost;
-                    const newCogs = newDelivered * unitTrueCost;
-
+                    const cogs = deliveredUnits * unitTrueCost; 
                     const marketingCost = parseFloat(m1.budget) || 0; 
-                    
-                    // Shipping & Ops
-                    const retainedShip = subsDispatched * c.ship;
-                    const newShip = (newDelivered * c.ship) + (rtoUnits * (c.ship + c.rtoPen));
-                    const shippingCost = retainedShip + newShip;
-                    
-                    const retainedPack = subsDispatched * s.pack;
-                    const newPack = newDispatched * s.pack;
-                    const packCostTotal = retainedPack + newPack;
-                    
-                    const retainedGateway = retainedRev * 0.025;
-                    const newGateway = newRev * 0.025;
-                    const gatewayTotal = retainedGateway + newGateway;
+                    const shippingCost = (deliveredUnits * c.ship) + (rtoUnits * (c.ship + c.rtoPen));
+                    const packCostTotal = dispatched * s.pack;
+                    const gatewayTotal = rev * 0.025;
 
-                    // Profit Splits
-                    const retainedProfit = retainedRev - retainedCogs - retainedShip - retainedPack - retainedGateway;
-                    const newProfit = newRev - newCogs - newShip - newPack - newGateway - marketingCost;
-                    
-                    const prof = retainedProfit + newProfit;
-
-                    return { demand, dispatched, effectiveAvailForBackend, m2Avail, m3Avail, rev, prof, retainedRev, retainedProfit, newProfit, lockup, shippingCost, packCostTotal, gatewayTotal };
+                    return { demand, dispatched, m2Avail, m3Avail, rev, prof: rev - cogs - marketingCost - shippingCost - packCostTotal - gatewayTotal, codRev, prepaidRev, shippingCost, packCostTotal, gatewayTotal };
                 };
 
                 const p = getProj();
@@ -372,48 +315,57 @@
                 const baseCost = m1.method === "Local" ? Math.floor(s.local * localMultiplier) : s.china;
                 const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
                 const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value"; 
+                const unitTrueCost = parseFloat(m1.trueU) || 0;
                 
                 const winBackCost = (user.module == 3 && m3.useWinBack) ? churnedCustomers * Math.floor(actualCpa * 1.5) : 0;
+
+                const retainedRevenue = (user.module >= 3) ? finalSubscribers * (parseFloat(m1.price) || 0) : 0;
+                
+                const guaranteedCogs = finalSubscribers * unitTrueCost;
+                const guaranteedShip = finalSubscribers * c.ship;
+                const guaranteedPack = finalSubscribers * s.pack;
+                const guaranteedGateway = retainedRevenue * 0.025;
+                const guaranteedProfit = retainedRevenue - guaranteedCogs - guaranteedShip - guaranteedPack - guaranteedGateway;
+
                 const appliedWinBackPenalty = (user.module == 3 && m3.useWinBack) ? winBackCost : 0;
                 
                 const lastRev = (user.results && user.results.length > 0) ? parseFloat(user.results[user.results.length - 1][8]) : 0;
                 const estimatedLocked = user.module > 1 ? Math.floor(lastRev * 0.15) : 0; 
-                
-                // M4 FIX: Clear the M3 Lockup and add to liquid cash!
-                const baseLiquid = parseInt(user.cash) + estimatedLocked;
+                const baseLiquid = parseInt(user.cash) - estimatedLocked;
                 
                 const oldLandedCost = user.pendingDecision && !user.hasSubmittedCurrentModule ? parseFloat(user.pendingDecision.landed) : 0;
                 const liquidCashAvailable = baseLiquid + oldLandedCost;
+                
+                const codRateDecimal = Math.max(0.65, 0.95 - (user.brand / 150) * 0.30);
+                const dynamicCodPercent = Math.round(codRateDecimal * 100);
 
-                const totalQtyToOrder = (parseInt(m1.qty)||0) + (user.module == 2 && m2.useBridge ? (parseInt(m2.bridgeQty)||0) : 0);
+                const forcedPrepaidDecimal = user.module >= 3 ? m3.prepaidTarget / 100 : 0;
+                const actualCodShare = Math.max(0, codRateDecimal - forcedPrepaidDecimal); 
+                
+                const totalGrossCodRevenue = p.rev * actualCodShare; 
+                const projectedLockedCash = totalGrossCodRevenue * c.holdback;
+
+                // --- THE LIVE SPEND MATH FIX ---
+                const totalQtyToOrder = (parseInt(m1.qty)||0) + (m2.useBridge ? (parseInt(m2.bridgeQty)||0) : 0);
                 const estProcurement = totalQtyToOrder * (parseFloat(m1.trueU) || 0);
+                
                 const m4CapexActual = (user.module == 4) ? totalCapEx : 0;
-                
-                const holdingCostCalc = user.module >= 3 ? Math.max(0, (parseInt(user.inventory) + (m1.method === "Local" ? totalQtyToOrder : (m1.method === "China_Air" ? Math.floor(totalQtyToOrder * 0.5) : 0)) - p.dispatched)) * 50 : 0;
-                
-                const liveSpend = estProcurement + (parseFloat(m1.budget) || 0) + appliedWinBackPenalty + m4CapexActual + p.shippingCost + p.packCostTotal + p.gatewayTotal + holdingCostCalc;
+                const liveSpend = estProcurement + (parseFloat(m1.budget) || 0) + appliedWinBackPenalty + m4CapexActual + p.shippingCost + p.packCostTotal + p.gatewayTotal;
                 
                 const remainingAfterBudget = liquidCashAvailable + loanAmount - liveSpend;
                 
-                // Deduct M4 UI CapEx from total profit so it accurately reflects ROI on the UI investment
-                const totalProjectedProfit = p.prof - (user.module == 4 ? totalCapEx : 0);
-                const liquidCashInflow = totalProjectedProfit - p.lockup;
-
-                const hasTrueUnitCost = m1.trueU && parseFloat(m1.trueU) > 0;
+                const totalProjectedProfit = (user.module >= 3 ? p.prof + guaranteedProfit : p.prof);
+                const liquidCashInflow = totalProjectedProfit - projectedLockedCash;
 
                 const submit = async () => {
                     if(remainingAfterBudget < 0) return alert("Insufficient Liquid Cash! You exceed your available funds after CapEx, budgeting, and operational costs. Try taking a Loan from the top bar.");
                     if(!m1.landed || !m1.trueU || !m1.price) return alert("Error: Please complete the manual calculations in the Procure-to-Pay section.");
                     
                     if (user.module == 2) {
-                        if ((m2.recurringModel || "").trim().length < 50 || (m2.trialStrategy || "").trim().length < 50 || (m2.churnStrategy || "").trim().length < 50) {
-                            return alert("Error: All CEO Strategy text boxes must be at least 50 characters long to submit.");
-                        }
+                        if ((m2.recurringModel || "").trim().length < 50 || (m2.trialStrategy || "").trim().length < 50 || (m2.churnStrategy || "").trim().length < 50) return alert("Error: All CEO Strategy text boxes must be at least 50 characters long to submit.");
                     }
                     if (user.module == 3) {
-                        if ((m3.foggStrategy || "").trim().length < 50 || (m3.asymmetryScript || "").trim().length < 50 || (m3.cccStrategy || "").trim().length < 50) {
-                            return alert("Error: You must academically justify all three of your Module 3 decisions with at least 50 characters each.");
-                        }
+                        if ((m3.foggStrategy || "").trim().length < 50 || (m3.asymmetryScript || "").trim().length < 50 || (m3.cccStrategy || "").trim().length < 50) return alert("Error: You must academically justify all three of your Module 3 decisions with at least 50 characters each.");
                     }
                     if (user.module == 4) {
                         if (stack.length === 0) return alert("Error: You must build your UI layout by clicking elements from the Catalog.");
@@ -421,15 +373,15 @@
                     }
 
                     setStatus("busy");
-                    const finalMethod = (user.module == 2 && m2.useBridge) ? m1.method + " / " + m2.bridgeMethod : m1.method;
-                    const finalQty = (user.module == 2 && m2.useBridge) ? parseInt(m1.qty) + parseInt(m2.bridgeQty) : m1.qty;
 
                     let payload = {
                         action: "submitDecision", companyId: user.companyId, module: user.module,
-                        method: finalMethod, courier: m1.courier, qty: finalQty, marketingBudget: m1.budget,
+                        method: m1.method, courier: m1.courier, qty: m1.qty, 
+                        bridgeMethod: (m2.useBridge) ? m2.bridgeMethod : "",
+                        bridgeQty: (m2.useBridge) ? m2.bridgeQty : 0,
+                        marketingBudget: m1.budget,
                         gVal: m1.gVal, cif: m1.cif, duty: m1.duty, gstV: m1.gstV, gstP: m1.gstP,
                         totalLanded: m1.landed, trueU: m1.trueU, price: m1.price, grossMargin: m1.gross, opMargin: m1.op,
-                        effectiveAvail: getProj().effectiveAvailForBackend,
                         loanTaken: loanAmount
                     };
 
@@ -473,40 +425,35 @@
                                 </div>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Box textAlign="right" display="flex" flexWrap="wrap" gap={2} p={1.5} sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)'}}>
-                                        <Box textAlign="left" sx={{borderRight: user.hasSubmittedCurrentModule ? 'none' : '1px solid rgba(0,0,0,0.1)', pr: 2}}>
-                                            <Typography variant="caption" color="text.secondary" display="block">Base Equity & Cleared Cash</Typography>
+                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2}}>
+                                            <Typography variant="caption" color="text.secondary" display="block">Equity & Stock</Typography>
                                             <Typography variant="h6" className="mono" color="#1e293b" lineHeight={1}>Rs {parseInt(user.cash).toLocaleString()}</Typography>
-                                            <Typography variant="caption" className="mono" color="#10b981">+ Rs {Math.floor(estimatedLocked).toLocaleString()} M3 Cleared</Typography>
-                                            <Typography variant="caption" className="mono" color="#475569" display="block">{user.inventory} Units | {user.brand} Score</Typography>
+                                            <Typography variant="caption" className="mono" color="#475569">{user.inventory} Units | {user.brand} Score | <span style={{color:'#10b981'}}>{user.module >= 3 ? finalSubscribers : 0} Subs</span></Typography>
                                         </Box>
                                         
-                                        {!user.hasSubmittedCurrentModule && (
-                                            <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2}}>
-                                                <Typography variant="caption" color="error.main" display="block">Live Operational Spend</Typography>
-                                                <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(liveSpend).toLocaleString()}</Typography>
-                                                <Typography variant="caption" className="mono" color="#f59e0b">Est Next Lock: Rs {Math.floor(p.lockup).toLocaleString()}</Typography>
-                                            </Box>
-                                        )}
+                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2}}>
+                                            <Typography variant="caption" color="error.main" display="block">Live Spend + Prior Lock</Typography>
+                                            <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(liveSpend + estimatedLocked).toLocaleString()}</Typography>
+                                            <Typography variant="caption" className="mono" color="#f59e0b">Est Next Lock: Rs {Math.floor(projectedLockedCash).toLocaleString()}</Typography>
+                                        </Box>
 
-                                        <Box textAlign="left" sx={{borderLeft: user.hasSubmittedCurrentModule ? 'none' : '2px solid #10b981', pl: user.hasSubmittedCurrentModule ? 0 : 2}}>
-                                            <Typography variant="caption" color={user.hasSubmittedCurrentModule || remainingAfterBudget >= 0 ? "#10b981" : "error.main"} fontWeight="bold" display="block">Liquid Cash Remaining</Typography>
-                                            <Typography variant="h5" className="mono" color={user.hasSubmittedCurrentModule || remainingAfterBudget >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(user.hasSubmittedCurrentModule ? liquidCashAvailable : remainingAfterBudget).toLocaleString()}</Typography>
+                                        <Box textAlign="left" sx={{borderLeft: '2px solid #10b981', pl: 2}}>
+                                            <Typography variant="caption" color={remainingAfterBudget >= 0 ? "#10b981" : "error.main"} fontWeight="bold" display="block">Liquid Cash Remaining</Typography>
+                                            <Typography variant="h5" className="mono" color={remainingAfterBudget >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(remainingAfterBudget).toLocaleString()}</Typography>
                                         </Box>
                                     </Box>
                                     <Button variant="contained" color="error" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{height: 'fit-content'}}>Logout</Button>
                                 </Box>
                             </Box>
 
-                            {/* --- DEBT FACILITY ROW --- */}
                             {user.module <= 4 && !user.hasSubmittedCurrentModule && (
                                 <Box sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(245, 158, 11, 0.3)', p: 2, mb: 3}}>
                                     <Grid container spacing={3} alignItems="center">
                                         <Grid item xs={12} md={3}>
                                             <Typography variant="body2" fontWeight="bold" color="#d97706" className="icon-text">
-                                                <Icon sx={{fontSize: 20}}>account_balance</Icon> Debt Facility
+                                                <Icon sx={{fontSize: 20}}>account_balance</Icon> Debt Facility (30% Int)
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary" display="block">Minimum Rs 1,000,000 to borrow.</Typography>
-                                            {loanAmount > 0 && <Typography variant="caption" color="#ef4444" display="block" mt={0.5}>Est. Semester End Payoff: <b>Rs {(loanAmount * 1.30).toLocaleString()}</b> (Includes 30% Interest)</Typography>}
                                         </Grid>
                                         <Grid item xs={12} md={6}>
                                             <Slider 
@@ -563,7 +510,7 @@
                             {navTab === 0 && user.module <= 4 && !user.hasSubmittedCurrentModule && (
                                 <Grid container spacing={4}>
                                     
-                                    {/* --- SIDEBAR FOR PROCUREMENT (PERSISTS ACROSS ALL MODULES) --- */}
+                                    {/* --- SIDEBAR FOR PROCUREMENT --- */}
                                     <Grid item xs={12} md={4}>
                                         <Box className="sidebar">
                                             <div className="m3-card">
@@ -628,7 +575,7 @@
                                                     <Grid item xs={12}>
                                                         <Typography variant="caption" color="text.secondary">Marketing Budget (PKR)</Typography>
                                                         <Stack direction="row" spacing={2} alignItems="center">
-                                                            <Slider value={Number(m1.budget)||0} min={0} max={liquidCashAvailable + loanAmount > 0 ? liquidCashAvailable + loanAmount : 100000} onChange={(e,v)=>setM1({...m1, budget: v})} disabled={status === "locked"} />
+                                                            <Slider value={Number(m1.budget)||0} min={0} max={liquidCashAvailable > 0 ? liquidCashAvailable : 100000} onChange={(e,v)=>setM1({...m1, budget: v})} disabled={status === "locked"} />
                                                             <TextField type="text" size="small" value={m1.budget} onChange={e=>setM1({...m1, budget: cleanNum(e.target.value)})} sx={{width: '90px'}} disabled={status === "locked"} />
                                                         </Stack>
                                                     </Grid>
@@ -715,7 +662,7 @@
                                                         </Grid>
                                                         <Grid item xs={3}>
                                                             <Typography variant="caption" display="block" color="text.secondary">Guaranteed Profit</Typography>
-                                                            <Typography variant="h5" className="mono" color="#10b981">Rs {Math.floor(p.retainedProfit).toLocaleString()}</Typography>
+                                                            <Typography variant="h5" className="mono" color="#10b981">Rs {guaranteedProfit.toLocaleString()}</Typography>
                                                         </Grid>
                                                     </Grid>
                                                     
@@ -801,7 +748,7 @@
                                             <div className="m3-card pb-10" style={{border: '1px solid #0ea5e9'}}>
                                                 <Typography variant="overline" color="#0ea5e9" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>web</Icon> MACRO SHOCK: THE SATURATION CRISIS & CRO</Typography>
                                                 <Typography variant="body2" sx={{mt: 1, mb: 3}}>
-                                                    The situation is still tough. Due to global supply chain disruptions, local procurement is still expensive. Advertising costs (CAC) have globally spiked. Organic word-of-mouth has dried up. You must design a high-converting mobile landing page to survive. Stack UI components below to balance Motivation, Ability, and Trust. 
+                                                    The situation is still tough. Due to global supply chain disruptions, local procurement is still expensive. Advertising costs (CAC) have globally spiked. You must design a high-converting mobile landing page to survive. Stack UI components below to balance Motivation, Ability, and Trust. 
                                                 </Typography>
 
                                                 <Box sx={{background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 2, p: 2, mb: 3}}>
@@ -812,8 +759,8 @@
                                                             <Typography variant="h5" className="mono" color="#10b981">{finalSubscribers}</Typography>
                                                         </Grid>
                                                         <Grid item xs={6}>
-                                                            <Typography variant="caption" display="block" color="text.secondary">Estimated Organic Referrals</Typography>
-                                                            <Typography variant="h5" className="mono" color="#10b981">{Math.floor(finalSubscribers / 2)} <span className="text-xs text-slate-500 font-normal">Free Traffic</span></Typography>
+                                                            <Typography variant="caption" display="block" color="text.secondary">Fixed Monthly Revenue</Typography>
+                                                            <Typography variant="h5" className="mono" color="#10b981">Rs {retainedRevenue.toLocaleString()}</Typography>
                                                         </Grid>
                                                     </Grid>
                                                 </Box>
@@ -861,7 +808,7 @@
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex flex-col relative min-h-full">
-                                                                        {/* The Fold Indicator */}
+                                                                        {/* The Fold Indicator (approx 420px inner height mapped to 100vh) */}
                                                                         <div className="absolute top-[420px] w-full border-t border-dashed border-red-500 z-40 pointer-events-none flex justify-end pr-1">
                                                                             <span className="bg-red-500 text-white text-[7px] px-1 rounded-b font-bold tracking-wider">THE FOLD</span>
                                                                         </div>
@@ -933,54 +880,32 @@
                                             <Typography variant="overline" color="#94a3b8" sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1, lineHeight: 1}}>
                                                 <Icon sx={{fontSize: 16}}>query_stats</Icon> BUDGET-ADJUSTED BATCH FORECAST
                                             </Typography>
-                                            
                                             <Grid container spacing={2}>
                                                 <Grid item xs>
-                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>TOTAL DEMAND</Typography>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>NEW DEMAND</Typography>
                                                     <Typography variant="h5" className="mono" lineHeight={1}>{p.demand.toLocaleString()}</Typography>
                                                 </Grid>
                                                 <Grid item xs>
                                                     <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>BATCH FULFILLED</Typography>
-                                                    <Typography variant="h5" className="mono" lineHeight={1} color={p.dispatched < p.demand ? "#ef4444" : "inherit"}>{p.dispatched.toLocaleString()}</Typography>
+                                                    <Typography variant="h5" className="mono" lineHeight={1} color={p.dispatched < p.demand ? "#ef4444" : "inherit"}>{(p.dispatched + finalSubscribers).toLocaleString()}</Typography>
                                                 </Grid>
-                                                
-                                                {!hasTrueUnitCost ? (
-                                                    <Grid item xs={12} sm={6}>
-                                                        <div className="animate-pulse bg-red-900/50 border border-red-400 text-red-200 px-3 py-2 rounded-lg text-center font-bold text-sm h-full flex items-center justify-center">
-                                                            ⚠️ Awaiting Procure-to-Pay Math (Enter True Unit Cost to see Profits)
-                                                        </div>
+                                                {user.module >= 3 && (
+                                                    <Grid item xs>
+                                                        <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>FIXED REV (RETAINED)</Typography>
+                                                        <Typography variant="h5" className="mono" lineHeight={1} color="#10b981">Rs {retainedRevenue.toLocaleString()}</Typography>
+                                                        <Typography variant="caption" color="#94a3b8" className="mono">({finalSubscribers} Subs)</Typography>
                                                     </Grid>
-                                                ) : (
-                                                    <>
-                                                        {user.module >= 3 && (
-                                                            <>
-                                                                <Grid item xs>
-                                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>REV (RETAINED)</Typography>
-                                                                    <Typography variant="h6" className="mono" lineHeight={1} color="#10b981">Rs {Math.floor(p.retainedRev).toLocaleString()}</Typography>
-                                                                </Grid>
-                                                                <Grid item xs>
-                                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>PROFIT (RETAINED)</Typography>
-                                                                    <Typography variant="h6" className="mono" lineHeight={1} color="#10b981">Rs {Math.floor(p.retainedProfit).toLocaleString()}</Typography>
-                                                                </Grid>
-                                                            </>
-                                                        )}
-                                                        <Grid item xs>
-                                                            <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>PROFIT (NEW)</Typography>
-                                                            <Typography variant="h6" className="mono" lineHeight={1} color={(p.newProfit - (user.module == 4 ? totalCapEx : 0)) > 0 ? "#10b981" : "#ef4444"}>Rs {Math.floor(p.newProfit - (user.module == 4 ? totalCapEx : 0)).toLocaleString()}</Typography>
-                                                        </Grid>
-                                                        <Grid item xs>
-                                                            <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>TOTAL PROFIT</Typography>
-                                                            <Typography variant="h5" lineHeight={1} color={totalProjectedProfit > 0 ? "#10b981" : "#ef4444"} className="mono">{`Rs ${Math.floor(totalProjectedProfit).toLocaleString()}`}</Typography>
-                                                        </Grid>
-                                                        <Grid item xs>
-                                                            <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>CASH INFLOW</Typography>
-                                                            <Typography variant="h5" lineHeight={1} color={liquidCashInflow > 0 ? "#3b82f6" : "#ef4444"} className="mono">{`Rs ${Math.floor(liquidCashInflow).toLocaleString()}`}</Typography>
-                                                            {user.module >= 2 && <Typography variant="caption" color="#f59e0b" className="mono">-Rs {Math.floor(p.lockup).toLocaleString()} Holdback</Typography>}
-                                                        </Grid>
-                                                    </>
                                                 )}
+                                                <Grid item xs>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>TOTAL PROFIT</Typography>
+                                                    <Typography variant="h5" lineHeight={1} color={totalProjectedProfit > 0 ? "#10b981" : "#ef4444"} className="mono">{`Rs ${totalProjectedProfit.toLocaleString()}`}</Typography>
+                                                </Grid>
+                                                <Grid item xs>
+                                                    <Typography variant="caption" color="#cbd5e1" display="block" mb={0.5}>LIQUID CASH INFLOW</Typography>
+                                                    <Typography variant="h5" lineHeight={1} color={liquidCashInflow > 0 ? "#3b82f6" : "#ef4444"} className="mono">{`Rs ${Math.floor(liquidCashInflow).toLocaleString()}`}</Typography>
+                                                    {user.module >= 2 && <Typography variant="caption" color="#f59e0b" className="mono">-Rs {Math.floor(projectedLockedCash).toLocaleString()} Holdback</Typography>}
+                                                </Grid>
                                             </Grid>
-
                                             {user.module <= 3 && (p.m3Avail > 0 || p.m2Avail < p.demand) && (
                                                 <Box sx={{mt: 1.5, display: 'flex', gap: 3}}>
                                                     <Typography variant="caption" color="#10b981" className="mono">✓ Available this month: {p.m2Avail}</Typography>
