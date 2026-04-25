@@ -130,7 +130,6 @@
         }
 
         function App() {
-            // Layout & Auth State
             const [view, setView] = useState("auth"); 
             const [authTab, setAuthTab] = useState(0); 
             const [navTab, setNavTab] = useState(0);
@@ -138,13 +137,11 @@
             const [status, setStatus] = useState("idle");
             const [user, setUser] = useState(null); 
 
-            // Form Data
             const [form, setForm] = useState({ rollNo: "", email: "", password: "", ceoName: "", companyName: "", niche: "Beauty" });
             const [m1, setM1] = useState({ method: "Local", courier: "Standard", qty: 0, budget: 0, gVal: "", cif: "", duty: "", gstV: "", gstP: "", landed: "", trueU: "", price: 0, gross: "", op: "" });
             const [m2, setM2] = useState({ useBridge: false, bridgeMethod: "Local", bridgeQty: 0, recurringModel: "", trialStrategy: "", churnStrategy: "", subDiscount: 10 });
             const [m3, setM3] = useState({ prepaidTarget: 0, checkoutUX: "Guest (1-Click)", foggStrategy: "", asymmetryScript: "", cccStrategy: "", useWinBack: false });
 
-            // Module 4 & Loan State
             const [stack, setStack] = useState([]);
             const [m4Strategy, setM4Strategy] = useState(''); 
             const [loanAmount, setLoanAmount] = useState(0);
@@ -187,7 +184,6 @@
                                 setM3({ prepaidTarget: prep, checkoutUX: ux, foggStrategy: pd.trialStrategy, asymmetryScript: pd.churnStrategy, cccStrategy: ccc, useWinBack: wb });
                                 
                             } else if (res.data.module > 1 && res.data.lastBudget) {
-                                // Default budget to 0 on M4 so they see organic traffic baseline first
                                 const newBudget = res.data.module >= 4 ? 0 : res.data.lastBudget;
                                 setM1(prev => ({...prev, budget: newBudget, price: res.data.lastPrice}));
                             }
@@ -207,7 +203,6 @@
 
             const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
 
-            // Mod 4 Builder Handlers
             const addElement = (element) => { setStack([...stack, { ...element, uniqueId: Math.random() }]); };
             const removeElement = (index) => { setStack(stack.filter((_, i) => i !== index)); };
             const moveUp = (index) => {
@@ -374,35 +369,38 @@
                 const oldLandedCost = user.pendingDecision && !user.hasSubmittedCurrentModule ? parseFloat(user.pendingDecision.landed) : 0;
                 const liquidCashAvailable = baseLiquid + oldLandedCost;
 
-                // --- THE LIVE SPEND MATH FIX ---
                 const totalQtyToOrder = (parseInt(m1.qty)||0) + (user.module == 2 && m2.useBridge ? (parseInt(m2.bridgeQty)||0) : 0);
                 const estProcurement = totalQtyToOrder * (parseFloat(m1.trueU) || 0);
-                
-                let savedCapEx = 0;
-                if (user.pendingDecision && user.pendingDecision.recurringModel) {
-                    const cxMatch = user.pendingDecision.recurringModel.match(/\[CRO CapEx: (\d+)\]/);
-                    if (cxMatch) savedCapEx = parseInt(cxMatch[1]);
-                }
-                const m4CapexActual = (user.module == 4) ? (user.hasSubmittedCurrentModule ? savedCapEx : totalCapEx) : 0;
+                const m4CapexActual = (user.module == 4) ? totalCapEx : 0;
                 
                 const holdingCostCalc = user.module >= 3 ? Math.max(0, (parseInt(user.inventory) + (m1.method === "Local" ? totalQtyToOrder : (m1.method === "China_Air" ? Math.floor(totalQtyToOrder * 0.5) : 0)) - p.dispatched)) * 50 : 0;
                 
                 const liveSpend = estProcurement + (parseFloat(m1.budget) || 0) + appliedWinBackPenalty + m4CapexActual + p.shippingCost + p.packCostTotal + p.gatewayTotal + holdingCostCalc;
                 
-                let displayedLiveSpend = liveSpend;
-                let remainingAfterBudget = liquidCashAvailable + loanAmount - liveSpend;
-
-                if (user.hasSubmittedCurrentModule) {
-                    // The backend already deducted inventory (estProcurement) and added the loan to user.cash.
-                    // We immediately deduct the remaining operational costs (Marketing, CapEx, etc.) here so it reflects instantly on lock screen.
-                    displayedLiveSpend = liveSpend - estProcurement;
-                    remainingAfterBudget = liquidCashAvailable - displayedLiveSpend;
-                }
+                const remainingAfterBudget = liquidCashAvailable + loanAmount - liveSpend;
                 
-                const totalProjectedProfit = (user.module >= 3 ? p.prof + guaranteedProfit : p.prof) - m4CapexActual;
-                const liquidCashInflow = totalProjectedProfit - projectedLockedCash;
+                const totalProjectedProfit = p.prof - (user.module == 4 ? totalCapEx : 0);
+                const liquidCashInflow = totalProjectedProfit - p.lockup;
 
                 const hasTrueUnitCost = m1.trueU && parseFloat(m1.trueU) > 0;
+
+                // --- FIX FOR LOCKED SCREEN ---
+                let finalLiveSpend = liveSpend;
+                let finalRemaining = remainingAfterBudget;
+
+                if (user.hasSubmittedCurrentModule) {
+                    let savedCapEx = 0;
+                    if (user.pendingDecision && user.pendingDecision.recurringModel) {
+                        const cxMatch = user.pendingDecision.recurringModel.match(/\[CRO CapEx: (\d+)\]/);
+                        if (cxMatch) savedCapEx = parseInt(cxMatch[1]);
+                    }
+                    const lockedCapEx = (user.module == 4) ? savedCapEx : 0;
+                    
+                    // The backend already deducted inventory and added the loan to user.cash.
+                    // So we only display the deduction of Operational Spend (Marketing + CapEx + Shipping/Gateway)
+                    finalLiveSpend = finalLiveSpend - estProcurement - m4CapexActual + lockedCapEx;
+                    finalRemaining = liquidCashAvailable - finalLiveSpend; 
+                }
 
                 const submit = async () => {
                     if(remainingAfterBudget < 0) return alert("Insufficient Liquid Cash! You exceed your available funds after CapEx, budgeting, and operational costs. Try taking a Loan from the top bar.");
@@ -484,14 +482,14 @@
                                         </Box>
                                         
                                         <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2}}>
-                                            <Typography variant="caption" color="error.main" display="block">{user.hasSubmittedCurrentModule ? "Locked Op Spend" : "Live Operational Spend"}</Typography>
-                                            <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(displayedLiveSpend).toLocaleString()}</Typography>
-                                            <Typography variant="caption" className="mono" color="#f59e0b">Est Next Lock: Rs {Math.floor(projectedLockedCash).toLocaleString()}</Typography>
+                                            <Typography variant="caption" color="error.main" display="block">Live Operational Spend</Typography>
+                                            <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(finalLiveSpend).toLocaleString()}</Typography>
+                                            <Typography variant="caption" className="mono" color="#f59e0b">Est Next Lock: Rs {Math.floor(p.lockup).toLocaleString()}</Typography>
                                         </Box>
 
                                         <Box textAlign="left" sx={{borderLeft: '2px solid #10b981', pl: 2}}>
-                                            <Typography variant="caption" color={remainingAfterBudget >= 0 ? "#10b981" : "error.main"} fontWeight="bold" display="block">Liquid Cash Remaining</Typography>
-                                            <Typography variant="h5" className="mono" color={remainingAfterBudget >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(remainingAfterBudget).toLocaleString()}</Typography>
+                                            <Typography variant="caption" color={finalRemaining >= 0 ? "#10b981" : "error.main"} fontWeight="bold" display="block">Liquid Cash Remaining</Typography>
+                                            <Typography variant="h5" className="mono" color={finalRemaining >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(finalRemaining).toLocaleString()}</Typography>
                                         </Box>
                                     </Box>
                                     <Button variant="contained" color="error" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{height: 'fit-content'}}>Logout</Button>
