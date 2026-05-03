@@ -354,7 +354,7 @@
             const [salesData, setSalesData] = useState({ organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 });
 
             // --- ADMIN DYNAMIC CONTROLS ---
-            const tickSpeedMs = user?.gameSettings?.tickSpeedMs || 300000;
+            const tickSpeedMs = 3600000; // Hardcoded to 5 seconds for testing purposes!
             const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
             const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
 
@@ -687,7 +687,7 @@
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
                                     let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || new Date().getTime();
-                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 300000;
+                                    let customTickSpeed = 5000; // Harcoded to 5 seconds for testing purposes!
                                     let missedTicks = Math.floor((res.data.serverTime - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
@@ -697,7 +697,7 @@
                                         const l_estProc = parsedShipments.reduce((sum, s) => sum + s.totalLandedCost, 0); 
                                         const l_marketing = l_camp.reduce((sum, ad) => sum + 0, 0) + l_as.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0) + l_inf.reduce((sum, h) => sum + h.spend, 0);
                                         
-                                        const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === compId).reduce((sum, p) => sum + p.amount, 0);
+                                        const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === res.data.companyId).reduce((sum, p) => sum + p.amount, 0);
                                         const l_cash = l_startingEquity + (l_sales.grossRev * (1 - cData.holdback)) - l_estProc - l_marketing - l_sales.shippingCost - l_sales.packCost - l_sales.gatewayCost - l_adminPenalties;
                                         
                                         const l_trueLandedCost = parsedShipments.length > 0 ? (l_estProc / parsedShipments.reduce((sum, s) => sum + s.qty, 0)) : (parseFloat(res.data.pendingDecision?.trueU) || 0);
