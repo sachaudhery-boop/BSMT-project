@@ -687,7 +687,7 @@
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
                                     let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || new Date().getTime();
-                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 300;
+                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 90000;
                                     let missedTicks = Math.floor((res.data.serverTime - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
