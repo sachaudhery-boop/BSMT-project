@@ -702,7 +702,7 @@
                                         
                                         const l_trueLandedCost = parsedShipments.length > 0 ? (l_estProc / parsedShipments.reduce((sum, s) => sum + s.qty, 0)) : (parseFloat(res.data.pendingDecision?.trueU) || 0);
 
-                                        const catchUpState = { campaigns: l_camp, adSets: l_as, ads: l_ads, hiredInfluencers: l_inf, shipments: parsedShipments, salesData: l_sales, liveTick: l_tick, price: l_lockedPrice, initialStock: res.data.cash, nicheData: NICHE_DATA[res.data.niche], courierData: cData, userBrand: res.data.brand, currentCash: l_cash, baseRet: bRetained, trueLandedCost: l_trueLandedCost };
+                                        const catchUpState = { campaigns: l_camp, adSets: l_as, ads: l_ads, hiredInfluencers: l_inf, shipments: parsedShipments, salesData: l_sales, liveTick: l_tick, price: l_lockedPrice, initialStock: res.data.inventory, nicheData: NICHE_DATA[res.data.niche], courierData: cData, userBrand: res.data.brand, currentCash: l_cash, baseRet: bRetained, trueLandedCost: l_trueLandedCost };
                                         const advanced = runSimulationTicks(missedTicks, catchUpState);
                                         setAdSets(advanced.newAdSets); setHiredInfluencers(advanced.newInfluencers); setSalesData(advanced.newSalesData); setLiveTick(advanced.newTick);
                                     }
