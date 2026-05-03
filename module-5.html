@@ -356,7 +356,7 @@
             // --- ADMIN DYNAMIC CONTROLS ---
             const tickSpeedMs = user?.gameSettings?.tickSpeedMs || 300000;
             const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
-            const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === res.data.companyId).reduce((sum, p) => sum + p.amount, 0);
+            const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
 
             useEffect(() => {
                 const handleBeforeUnload = (e) => {
@@ -697,7 +697,7 @@
                                         const l_estProc = parsedShipments.reduce((sum, s) => sum + s.totalLandedCost, 0); 
                                         const l_marketing = l_camp.reduce((sum, ad) => sum + 0, 0) + l_as.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0) + l_inf.reduce((sum, h) => sum + h.spend, 0);
                                         
-                                        const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === compId).reduce((sum, p) => sum + p.amount, 0);
+                                        const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
                                         const l_cash = l_startingEquity + (l_sales.grossRev * (1 - cData.holdback)) - l_estProc - l_marketing - l_sales.shippingCost - l_sales.packCost - l_sales.gatewayCost - l_adminPenalties;
                                         
                                         const l_trueLandedCost = parsedShipments.length > 0 ? (l_estProc / parsedShipments.reduce((sum, s) => sum + s.qty, 0)) : (parseFloat(res.data.pendingDecision?.trueU) || 0);
