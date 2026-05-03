@@ -356,7 +356,7 @@
             // --- ADMIN DYNAMIC CONTROLS ---
             const tickSpeedMs = user?.gameSettings?.tickSpeedMs || 300000;
             const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
-            const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
+            const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === res.data.companyId).reduce((sum, p) => sum + p.amount, 0);
 
             useEffect(() => {
                 const handleBeforeUnload = (e) => {
