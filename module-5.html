@@ -414,7 +414,7 @@
             const totalActualSales = salesData.organic + adSets.reduce((sum, as) => sum + (as.metrics?.purchases || 0), 0) + hiredInfluencers.reduce((sum, h) => sum + h.purchases, 0);
             const codRateDecimal = user ? Math.max(0.65, 0.95 - (user.brand / 150) * 0.30) : 0;
             const actualCodShare = Math.max(0, codRateDecimal - (user?.module >= 3 ? m3.prepaidTarget / 100 : 0)); 
-            cconst projectedLockedCash = 0; // Disabled to prevent student confusion
+            const projectedLockedCash = 0; // Disabled to prevent student confusion
             
             const estProcurement = shipments.reduce((sum, sh) => sum + sh.totalLandedCost, 0); 
             const totalQtyProcured = shipments.reduce((sum, sh) => sum + sh.qty, 0);
