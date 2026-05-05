@@ -354,7 +354,7 @@
             const [salesData, setSalesData] = useState({ organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 });
 
             // --- ADMIN DYNAMIC CONTROLS ---
-            const tickSpeedMs = 300000; // Hardcoded to 5 seconds for testing purposes!
+            const tickSpeedMs = 1200000; // Hardcoded to 5 seconds for testing purposes!
             const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
             const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
 
