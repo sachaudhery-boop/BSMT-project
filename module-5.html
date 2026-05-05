@@ -354,7 +354,7 @@
             const [salesData, setSalesData] = useState({ organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 });
 
             // --- ADMIN DYNAMIC CONTROLS ---
-            const tickSpeedMs = 1200000; // Hardcoded to 5 seconds for testing purposes!
+            const tickSpeedMs = 1200000; // 20 minutes per tick (1 simulated hour)
             const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
             const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
 
@@ -579,7 +579,8 @@
 
                     const totalFulfilledThisTick = fulfilledOrganic + fulfilledRetained + fulfilledInf + fulfilledAds;
                     if (totalFulfilledThisTick > 0) {
-                        const deliveredThisTick = Math.floor(totalFulfilledThisTick * (1 - courierData.rtoRate));
+                        const expectedDelivered = totalFulfilledThisTick * (1 - courierData.rtoRate);
+                        const deliveredThisTick = Math.floor(expectedDelivered) + (Math.random() < (expectedDelivered % 1) ? 1 : 0);
                         const rtosThisTick = totalFulfilledThisTick - deliveredThisTick;
                         const revThisTick = deliveredThisTick * priceThisTick;
 
@@ -591,7 +592,7 @@
                         newSalesData.packCost += totalFulfilledThisTick * nicheData.pack;
                         newSalesData.gatewayCost += revThisTick * 0.025;
                         
-                        runningCash += (revThisTick * (1 - courierData.holdback)) - ((deliveredThisTick * courierData.ship) + (rtosThisTick * (courierData.ship + courierData.rtoPen))) - (totalFulfilledThisTick * nicheData.pack) - (revThisTick * 0.025);
+                        runningCash += revThisTick - ((deliveredThisTick * courierData.ship) + (rtosThisTick * (courierData.ship + courierData.rtoPen))) - (totalFulfilledThisTick * nicheData.pack) - (revThisTick * 0.025);
                     }
                 }
                 return { newAdSets, newInfluencers, newSalesData, newTick };
@@ -687,7 +688,7 @@
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
                                     let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || new Date().getTime();
-                                    let customTickSpeed = 5000; // Harcoded to 5 seconds for testing purposes!
+                                    let customTickSpeed = 1200000; // Match live tick speed for accurate catch-up
                                     let missedTicks = Math.floor((res.data.serverTime - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
