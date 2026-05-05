@@ -427,7 +427,7 @@
             const startingEquity = user ? parseInt(user.cash) + oldLandedCost + (user.module >= 5 ? totalLoan : loanAmount) : 0;
             
             // LIVE CASH DEDUCTS ADMIN PENALTIES
-            const liveCashRemaining = startingEquity + (salesData.grossRev * (1 - (user ? (c.holdback || 0) : 0))) - estProcurement - totalMarketingExpenditure - salesData.shippingCost - salesData.packCost - salesData.gatewayCost - adminPenalties;
+            const liveCashRemaining = startingEquity + salesData.grossRev - estProcurement - totalMarketingExpenditure - salesData.shippingCost - salesData.packCost - salesData.gatewayCost - adminPenalties;
 
             useEffect(() => {
                 simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost };
