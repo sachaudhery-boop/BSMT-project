@@ -414,7 +414,7 @@
             const totalActualSales = salesData.organic + adSets.reduce((sum, as) => sum + (as.metrics?.purchases || 0), 0) + hiredInfluencers.reduce((sum, h) => sum + h.purchases, 0);
             const codRateDecimal = user ? Math.max(0.65, 0.95 - (user.brand / 150) * 0.30) : 0;
             const actualCodShare = Math.max(0, codRateDecimal - (user?.module >= 3 ? m3.prepaidTarget / 100 : 0)); 
-            const projectedLockedCash = user ? (salesData.grossRev * actualCodShare) * (c.holdback || 0) : 0;
+            cconst projectedLockedCash = 0; // Disabled to prevent student confusion
             
             const estProcurement = shipments.reduce((sum, sh) => sum + sh.totalLandedCost, 0); 
             const totalQtyProcured = shipments.reduce((sum, sh) => sum + sh.qty, 0);
@@ -699,7 +699,7 @@
                                         const l_marketing = l_camp.reduce((sum, ad) => sum + 0, 0) + l_as.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0) + l_inf.reduce((sum, h) => sum + h.spend, 0);
                                         
                                         const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === res.data.companyId).reduce((sum, p) => sum + p.amount, 0);
-                                        const l_cash = l_startingEquity + (l_sales.grossRev * (1 - cData.holdback)) - l_estProc - l_marketing - l_sales.shippingCost - l_sales.packCost - l_sales.gatewayCost - l_adminPenalties;
+                                        const l_cash = l_startingEquity + l_sales.grossRev - l_estProc - l_marketing - l_sales.shippingCost - l_sales.packCost - l_sales.gatewayCost - l_adminPenalties;
                                         
                                         const l_trueLandedCost = parsedShipments.length > 0 ? (l_estProc / parsedShipments.reduce((sum, s) => sum + s.qty, 0)) : (parseFloat(res.data.pendingDecision?.trueU) || 0);
 
@@ -746,7 +746,7 @@
                 
                 // LOG LOAN
                 let logPayload = { action: 'logLoan', companyId: user.companyId, rollNo: user.rollNo, loanAmount: takenAmount, tick: liveTick };
-                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(logPayload) });
+                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: newSearchParams(logPayload) });
             };
 
             const handleOrderInventory = () => {
