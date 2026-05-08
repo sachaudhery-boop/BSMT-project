@@ -806,6 +806,7 @@
                 const baseCost = m1.method === "Local" ? Math.floor(s.local * localMultiplier) : s.china;
                 const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
                 const actualCpa = Math.floor(s.cpa * (user.module >= 2 ? 1.5 : 1.0));
+                const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value";
                 
                 let projectedForecastDemand = 0;
                 if (user.module >= 5) {
@@ -919,17 +920,27 @@
                                     <Grid item xs={12} md={4}>
                                         <Box className="sidebar">
                                             <div className="m3-card">
-                                                <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>inventory_2</Icon> DYNAMIC DOSSIER: {user.niche}</Typography>
-                                                <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2">Unit Cost (FOB)</Typography><Typography className="mono">Rs {baseCost}</Typography></div>
-                                                <div className="data-row"><Typography variant="body2">Weight / Volume</Typography><Typography className="mono">{s.kg}KG / {s.cbm}CBM</Typography></div>
-                                                <div className="data-row"><Typography variant="body2" fontWeight="bold">Active Freight Rate</Typography><Typography className="mono" fontWeight="bold">{freightDisplay}</Typography></div>
-                                                <Divider sx={{my:2}}/>
-                                                <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>local_shipping</Icon> FULFILLMENT: {m1.courier}</Typography>
-                                                <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2" color="secondary" fontWeight="bold">Baseline Niche CAC</Typography><Typography className="mono" fontWeight="bold">Rs {actualCpa}</Typography></div>
-                                                <div className="data-row"><Typography variant="body2">Courier Cost</Typography><Typography className="mono">Rs {c.ship}</Typography></div>
-                                                <div className="data-row"><Typography variant="body2" color="error.main">RTO Penalty</Typography><Typography className="mono" color="error.main">{(c.rtoRate * 100).toFixed(0)}% / Rs {c.rtoPen}</Typography></div>
-                                                <div className="data-row" style={{background: 'rgba(245, 158, 11, 0.1)', padding: '4px'}}><Typography variant="body2" color="#d97706" fontWeight="bold">COD Holdback</Typography><Typography className="mono" color="#d97706" fontWeight="bold">{(c.holdback * 100).toFixed(0)}% Locked</Typography></div>
-                                            </div>
+    <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>inventory_2</Icon> DYNAMIC DOSSIER: {user.niche}</Typography>
+    <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2">Unit Cost (FOB)</Typography><Typography className="mono">Rs {baseCost}</Typography></div>
+    <div className="data-row"><Typography variant="body2">Weight / Volume</Typography><Typography className="mono">{s.kg}KG / {s.cbm}CBM</Typography></div>
+    <div className="data-row"><Typography variant="body2" fontWeight="bold">Active Freight Rate</Typography><Typography className="mono" fontWeight="bold">{freightDisplay}</Typography></div>
+    
+    {/* --- THE MISSING IMPORT/LOGISTICS ROWS --- */}
+    <div className="data-row"><Typography variant="body2">Insurance Cost</Typography><Typography className="mono">{insuranceDisplay}</Typography></div>
+    <div className="data-row"><Typography variant="body2">Import Duty / GST Rate</Typography><Typography className="mono">{m1.method === "Local" ? "0%" : `${s.duty}%`} / 18%</Typography></div>
+    <div className="data-row"><Typography variant="body2">Agent / Misc Fees</Typography><Typography className="mono">{m1.method === "Local" ? "Rs 0" : "Rs 22,800"}</Typography></div>
+
+    <Divider sx={{my:2}}/>
+    <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>local_shipping</Icon> FULFILLMENT: {m1.courier}</Typography>
+    <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2" color="secondary" fontWeight="bold">Baseline Niche CAC</Typography><Typography className="mono" fontWeight="bold">Rs {actualCpa}</Typography></div>
+    <div className="data-row"><Typography variant="body2">Courier Delivery Cost</Typography><Typography className="mono">Rs {c.ship}</Typography></div>
+    
+    {/* --- THE MISSING PACKAGING & GATEWAY ROW --- */}
+    <div className="data-row"><Typography variant="body2">Pack & Gateway Fee</Typography><Typography className="mono">Rs {s.pack} / 2.5%</Typography></div>
+
+    <div className="data-row"><Typography variant="body2" color="error.main">Est. COD RTO Penalty</Typography><Typography className="mono" color="error.main">{(c.rtoRate * 100).toFixed(0)}% / Rs {c.rtoPen}</Typography></div>
+    <div className="data-row" style={{background: 'rgba(245, 158, 11, 0.1)', padding: '4px'}}><Typography variant="body2" color="#d97706" fontWeight="bold">COD Cash Holdback</Typography><Typography className="mono" color="#d97706" fontWeight="bold">{(c.holdback * 100).toFixed(0)}% Locked</Typography></div>
+</div>
 
                                             <div className="m3-card relative">
                                                 {orderCooldownActive && user.module === 5 && (
