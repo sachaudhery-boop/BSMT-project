@@ -699,9 +699,12 @@ if (priceThisTick > marketPrice) {
                                     setLastOrderTick(l_orderTick); setSalesData(l_sales); setLiveTick(l_tick); setLastPriceTick(l_priceTick); setLockedPrice(l_lockedPrice);
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
-                                    let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || new Date().getTime();
-                                    let customTickSpeed = 1200000; // Match live tick speed for accurate catch-up
-                                    let missedTicks = Math.floor((res.data.serverTime - lastSyncMs) / customTickSpeed);
+                                    // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
+                                    let currentTimeMs = new Date().getTime(); 
+                                    let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
+                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
+
+                                    let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
                                     if (missedTicks > 0) {
