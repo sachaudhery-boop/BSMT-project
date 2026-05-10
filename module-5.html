@@ -382,7 +382,7 @@
             const calculateShipmentCost = (method, qty) => {
                 if (!qty || qty <= 0 || !user) return 0;
                 const sData = NICHE_DATA[user.niche];
-                const fobCost = method === 'Local' ? (sData.local * 1.4) : sData.china;
+                const fobCost = method === 'Local' ? sData.local : sData.china;
                 const goodsValue = fobCost * qty;
                 const weight = sData.kg * qty; const cbm = sData.cbm * qty;
                 const freight = method === 'Local' ? (150 * qty) : (method === 'China_Air' ? 3100 * weight : 90000 * cbm);
@@ -430,8 +430,8 @@
             const liveCashRemaining = startingEquity + salesData.grossRev - estProcurement - totalMarketingExpenditure - salesData.shippingCost - salesData.packCost - salesData.gatewayCost - adminPenalties;
 
             useEffect(() => {
-                simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost };
-            }, [campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, lockedPrice, m1.courier, user, totalLoan, baseRetainedMod4, dynamicLandedCost, adminPenalties]);
+    simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost, gameSettings: user?.gameSettings || {} };
+}, [campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, lockedPrice, m1.courier, user, totalLoan, baseRetainedMod4, dynamicLandedCost, adminPenalties]);
 
             // --- THE CORE MATH ENGINE ---
             const runSimulationTicks = (ticksToRun, currentState) => {
@@ -448,8 +448,20 @@
                 if (priceThisTick <= 0) return { newAdSets, newInfluencers, newSalesData, newTick: liveTick + ticksToRun };
 
                 // 3x LANDED COST RULE
-                const optPrice = trueLandedCost > 0 ? (trueLandedCost * 3) : nicheData.opt; 
-                const elasticity = Math.max(0.2, Math.min(3.0, Math.pow((optPrice / priceThisTick), 1.5)));
+                // --- ADMIN CONTROLLED ELASTICITY ---
+const marketPrice = nicheData.opt; 
+let elasticity = 1.0; 
+
+if (priceThisTick > marketPrice) {
+    // Calculate how much (%) they are overpricing the market average
+    const percentOverpriced = (priceThisTick - marketPrice) / marketPrice;
+    
+    // Apply the penalty multiplier from the Admin Panel (defaults to 2.0x)
+    const elasticityPenalty = currentState.gameSettings.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
+    
+    // Drop demand based on the penalty. Floor it at 0.01 so they don't get negative sales.
+    elasticity = Math.max(0.01, 1.0 - (percentOverpriced * elasticityPenalty));
+}
                 const brandPower = Math.max(0.5, userBrand / 100);
 
                 let nicheRetentionMod = 0.5; // Medium Frequency default
@@ -802,7 +814,7 @@
             };
 
             if (view === "dashboard" && user) {
-                const localMultiplier = (user.module >= 3) ? 1.4 : 1.0; 
+                const localMultiplier = 1.0; 
                 const baseCost = m1.method === "Local" ? Math.floor(s.local * localMultiplier) : s.china;
                 const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
                 const actualCpa = Math.floor(s.cpa * (user.module >= 2 ? 1.5 : 1.0));
