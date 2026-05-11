@@ -654,8 +654,17 @@ if (priceThisTick > marketPrice) {
                 fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
             };
 
+            // --- FOOLPROOF AUTO-SAVE ENGINE ---
+            const lastSavedTick = useRef(-1);
+
             useEffect(() => {
-                if (user && user.module === 5 && liveTick > 0 && liveTick % 5 === 0) { syncDataToServer(); }
+                if (!user || user.module !== 5 || liveTick === 0) return;
+
+                // Save immediately when the clock moves forward. No throttles.
+                if (liveTick > lastSavedTick.current) {
+                    syncDataToServer();
+                    lastSavedTick.current = liveTick;
+                }
             }, [liveTick]);
 
             useEffect(() => {
