@@ -367,35 +367,19 @@ useEffect(() => {
 
 const simState = useRef(null);
 
-// THE ROBUST GAME LOOP (Immune to Browser Tab Sleeping)
+// THE ORIGINAL STABLE GAME LOOP
 useEffect(() => {
-    let lastTickRun = new Date().getTime(); // Lock the baseline time when they log in
+    // Reads speed from Admin Panel, default to 20 mins if missing
+    const currentTickSpeed = user?.gameSettings?.tickSpeedMs || 1200000; 
 
     const timer = setInterval(() => {
         if (!user || user.module !== 5 || !simState.current) return;
-
-        const now = new Date().getTime();
-        // Dynamically read speed from Admin Panel, default to 20 mins if missing
-        const currentTickSpeed = user.gameSettings?.tickSpeedMs || 1200000; 
-        
-        // Check exactly how much real-world time has passed since the last tick
-        const delta = now - lastTickRun;
-
-        if (delta >= currentTickSpeed) {
-            // Calculate how many ticks should have fired (handles background sleeping)
-            const ticksToProcess = Math.floor(delta / currentTickSpeed);
-            
-            // Move the baseline forward, preserving any leftover milliseconds
-            lastTickRun += ticksToProcess * currentTickSpeed;
-            
-            // Run the simulation math
-            const res = runSimulationTicks(ticksToProcess, simState.current);
-            setAdSets(res.newAdSets); 
-            setHiredInfluencers(res.newInfluencers); 
-            setSalesData(res.newSalesData); 
-            setLiveTick(res.newTick);
-        }
-    }, 2000); // The loop checks every 2 seconds to bypass browser throttling!
+        const res = runSimulationTicks(1, simState.current);
+        setAdSets(res.newAdSets); 
+        setHiredInfluencers(res.newInfluencers); 
+        setSalesData(res.newSalesData); 
+        setLiveTick(res.newTick);
+    }, currentTickSpeed); 
 
     return () => clearInterval(timer);
 }, [user]);
