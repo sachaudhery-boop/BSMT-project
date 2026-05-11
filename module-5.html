@@ -460,13 +460,8 @@ const marketPrice = nicheData.opt;
 let elasticity = 1.0; 
 
 if (priceThisTick > marketPrice) {
-    // Calculate how much (%) they are overpricing the market average
     const percentOverpriced = (priceThisTick - marketPrice) / marketPrice;
-    
-    // Apply the penalty multiplier from the Admin Panel (defaults to 2.0x)
-    const elasticityPenalty = currentState.gameSettings.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
-    
-    // Drop demand based on the penalty. Floor it at 0.01 so they don't get negative sales.
+    const elasticityPenalty = currentState.gameSettings?.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
     elasticity = Math.max(0.01, 1.0 - (percentOverpriced * elasticityPenalty));
 }
                 const brandPower = Math.max(0.5, userBrand / 100);
@@ -638,18 +633,17 @@ if (priceThisTick > marketPrice) {
                 fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
             };
 
-            // --- FOOLPROOF AUTO-SAVE ENGINE ---
-            const lastSavedTick = useRef(-1);
+            // --- SMART AUTO-SAVE ENGINE ---
+const lastSavedTick = useRef(-1);
 
-            useEffect(() => {
-                if (!user || user.module !== 5 || liveTick === 0) return;
+useEffect(() => {
+    if (!user || user.module !== 5 || liveTick === 0) return;
 
-                // Save immediately when the clock moves forward. No throttles.
-                if (liveTick > lastSavedTick.current) {
-                    syncDataToServer();
-                    lastSavedTick.current = liveTick;
-                }
-            }, [liveTick]);
+    if (liveTick > lastSavedTick.current) {
+        syncDataToServer();
+        lastSavedTick.current = liveTick;
+    }
+}, [liveTick]);
 
             useEffect(() => {
                 const saved = localStorage.getItem('student_creds');
@@ -715,12 +709,12 @@ if (priceThisTick > marketPrice) {
                                     setLastOrderTick(l_orderTick); setSalesData(l_sales); setLiveTick(l_tick); setLastPriceTick(l_priceTick); setLockedPrice(l_lockedPrice);
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
-                                    // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
-                                    let currentTimeMs = new Date().getTime(); 
-                                    let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
-                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
+                                   // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
+                                let currentTimeMs = new Date().getTime(); 
+                                let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
+                                let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
 
-                                    let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
+                                let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
                                     if (missedTicks > 0) {
