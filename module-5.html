@@ -633,17 +633,24 @@ if (priceThisTick > marketPrice) {
                 fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
             };
 
-            // --- SMART AUTO-SAVE ENGINE ---
-const lastSavedTick = useRef(-1);
+           // --- SMART AUTO-SAVE ENGINE ---
+            const lastSavedTick = useRef(-1);
 
-useEffect(() => {
-    if (!user || user.module !== 5 || liveTick === 0) return;
+            useEffect(() => {
+                if (!user || user.module !== 5 || liveTick === 0) return;
 
-    if (liveTick > lastSavedTick.current) {
-        syncDataToServer();
-        lastSavedTick.current = liveTick;
-    }
-}, [liveTick]);
+                // PREVENT SAVE ON REFRESH: If this is the initial load, memorize the time and DO NOTHING.
+                if (lastSavedTick.current === -1) {
+                    lastSavedTick.current = liveTick;
+                    return; 
+                }
+
+                // Save strictly when the game engine actively ticks time forward.
+                if (liveTick > lastSavedTick.current) {
+                    syncDataToServer();
+                    lastSavedTick.current = liveTick;
+                }
+            }, [liveTick]);
 
             useEffect(() => {
                 const saved = localStorage.getItem('student_creds');
