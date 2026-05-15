@@ -95,7 +95,7 @@
                     <div style={{height: '300px', marginBottom: '24px'}}><canvas ref={chartRef}></canvas></div>
                     {results && results.length > 0 && (
                         <div className="mt-8 border-t border-gray-200 pt-6">
-                            <Typography variant="h6" fontWeight="bold" mb={3} className="icon-text"><Icon color="primary">rate_review</Icon> Board & Instructor Feedback</Typography>
+                            <Typography variant="h6" fontWeight="bold" mb={3} className="icon-text"><Icon color="primary">rate_review</Icon> Instructor Feedback</Typography>
                             <div className="space-y-4">
                                 {results.map((r, idx) => (
                                     <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -1173,7 +1173,7 @@
                                         <Icon sx={{fontSize: 64, color: '#2563eb', mb: 2}}>lock</Icon>
                                         <Typography variant="h4" fontWeight="bold" color="#1e293b">Capstone Locked</Typography>
                                         <Typography variant="h6" color="#475569" mt={2}>
-                                            {user.hasSubmittedCurrentModule ? "Your corporate policies have been successfully submitted and are awaiting Board Evaluation." : "The submission deadline (May 17, 2026, 11:59 PM PKT) has passed."}
+                                            {user.hasSubmittedCurrentModule ? "Your corporate policies have been successfully submitted and are awaiting Evaluation." : "The submission deadline (May 17, 2026, 11:59 PM PKT) has passed."}
                                         </Typography>
                                     </div>
                                 ) : (
