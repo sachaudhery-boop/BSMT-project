@@ -464,7 +464,7 @@
 
             // --- THE CORE MATH ENGINE ---
             const runSimulationTicks = (ticksToRun, currentState) => {
-                if (!currentState || !currentState.nicheData || !currentState.courierData) return currentState;
+                if (!currentState || !currentState.nicheData || !currentState.courierData) return { newAdSets: currentState?.adSets || [], newInfluencers: currentState?.hiredInfluencers || [], newSalesData: currentState?.salesData || { organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 }, newTick: currentState?.liveTick || 0 };
                 let { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price, initialStock, nicheData, courierData, userBrand, currentCash, baseRet, trueLandedCost } = currentState;
                 
                 let newAdSets = JSON.parse(JSON.stringify(adSets));
@@ -700,7 +700,7 @@
                                     const m = pd.recurringModel.match(/\[UX: (.*?) \| Prepaid: (\d+)% \| WinBack: (YES|NO)\] CCC: (.*)/);
                                     if (m) { ux = m[1]; prep = parseInt(m[2]); wb = (m[3]==='YES'); ccc = m[4]; }
                                 }
-                                setM1({ method: pd.method, courier: pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
+                                setM1({ method: pd.method === "N/A" ? "Local" : pd.method, courier: pd.courier === "N/A" ? "Standard" : pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
                                 setM2({ useBridge: pd.bridgeQty > 0, bridgeMethod: pd.bridgeMethod || "Local", bridgeQty: pd.bridgeQty || 0, recurringModel: pd.recurringModel, trialStrategy: pd.trialStrategy, churnStrategy: pd.churnStrategy, subDiscount: pd.subDiscount });
                                 setM3({ prepaidTarget: prep, checkoutUX: ux, foggStrategy: pd.trialStrategy, asymmetryScript: pd.churnStrategy, cccStrategy: ccc, useWinBack: wb });
                             } else if (res.data.module > 1 && res.data.lastBudget) {
@@ -747,7 +747,7 @@
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
                                     if (missedTicks > 0) {
-                                        const cData = COURIERS[res.data.pendingDecision?.courier || "Standard"];
+                                        const cData = COURIERS[res.data.pendingDecision?.courier] || COURIERS["Standard"];
                                         const l_startingEquity = parseInt(res.data.cash) + (parseFloat(res.data.pendingDecision?.landed) || 0) + l_totalLoan;
                                         const l_estProc = parsedShipments.reduce((sum, s) => sum + s.totalLandedCost, 0); 
                                         const l_marketing = l_camp.reduce((sum, ad) => sum + 0, 0) + l_as.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0) + l_inf.reduce((sum, h) => sum + h.spend, 0);
