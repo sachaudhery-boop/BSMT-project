@@ -89,7 +89,28 @@
                     options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', grid: {drawOnChartArea: false} } } }
                 });
             }, [results]);
-            return <div style={{height: '300px'}}><canvas ref={chartRef}></canvas></div>;
+            
+            return (
+                <div>
+                    <div style={{height: '300px', marginBottom: '24px'}}><canvas ref={chartRef}></canvas></div>
+                    {results && results.length > 0 && (
+                        <div className="mt-8 border-t border-gray-200 pt-6">
+                            <Typography variant="h6" fontWeight="bold" mb={3} className="icon-text"><Icon color="primary">rate_review</Icon> Board & Instructor Feedback</Typography>
+                            <div className="space-y-4">
+                                {results.map((r, idx) => (
+                                    <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2 border-b border-slate-200 pb-2">
+                                            <Typography variant="subtitle2" color="primary" fontWeight="bold">Module {r[2]}</Typography>
+                                            <Typography variant="caption" className="mono bg-white px-2 py-1 rounded border shadow-sm" color="#8b5cf6" fontWeight="bold">Brand Score: {r[13]}</Typography>
+                                        </div>
+                                        <Typography variant="body2" color="#334155" sx={{lineHeight: 1.6}}>{r[14] || "No specific feedback provided for this module."}</Typography>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         }
 
         // ==========================================
@@ -326,6 +347,7 @@
             const [m2, setM2] = useState({ useBridge: false, bridgeMethod: "Local", bridgeQty: 0, recurringModel: "", trialStrategy: "", churnStrategy: "", subDiscount: 10 });
             const [m3, setM3] = useState({ prepaidTarget: 0, checkoutUX: "Guest (1-Click)", foggStrategy: "", asymmetryScript: "", cccStrategy: "", useWinBack: false });
             const [stack, setStack] = useState([]); const [m4Strategy, setM4Strategy] = useState(''); 
+            const [m6, setM6] = useState({ shipping: "", returns: "", privacy: "", terms: "" });
             
             const [loanAmount, setLoanAmount] = useState(0);
             const [totalLoan, setTotalLoan] = useState(0); 
@@ -354,35 +376,35 @@
             const [salesData, setSalesData] = useState({ organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 });
 
             // --- ADMIN DYNAMIC CONTROLS ---
-const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
-const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
+            const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
+            const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
 
-useEffect(() => {
-    const handleBeforeUnload = (e) => {
-        if (user && user.module === 5) { e.preventDefault(); e.returnValue = ''; }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-}, [user]);
+            useEffect(() => {
+                const handleBeforeUnload = (e) => {
+                    if (user && user.module >= 5) { e.preventDefault(); e.returnValue = ''; }
+                };
+                window.addEventListener('beforeunload', handleBeforeUnload);
+                return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+            }, [user]);
 
-const simState = useRef(null);
+            const simState = useRef(null);
 
-// THE ORIGINAL STABLE GAME LOOP
-useEffect(() => {
-    // Reads speed from Admin Panel, default to 20 mins if missing
-    const currentTickSpeed = user?.gameSettings?.tickSpeedMs || 1200000; 
+            // THE ORIGINAL STABLE GAME LOOP
+            useEffect(() => {
+                // Reads speed from Admin Panel, default to 20 mins if missing
+                const currentTickSpeed = user?.gameSettings?.tickSpeedMs || 1200000; 
 
-    const timer = setInterval(() => {
-        if (!user || user.module !== 5 || !simState.current) return;
-        const res = runSimulationTicks(1, simState.current);
-        setAdSets(res.newAdSets); 
-        setHiredInfluencers(res.newInfluencers); 
-        setSalesData(res.newSalesData); 
-        setLiveTick(res.newTick);
-    }, currentTickSpeed); 
+                const timer = setInterval(() => {
+                    if (!user || user.module < 5 || !simState.current) return;
+                    const res = runSimulationTicks(1, simState.current);
+                    setAdSets(res.newAdSets); 
+                    setHiredInfluencers(res.newInfluencers); 
+                    setSalesData(res.newSalesData); 
+                    setLiveTick(res.newTick);
+                }, currentTickSpeed); 
 
-    return () => clearInterval(timer);
-}, [user]);
+                return () => clearInterval(timer);
+            }, [user]);
             
             const cleanNum = (val) => String(val).replace(/[^0-9.]/g, '');
 
@@ -437,8 +459,8 @@ useEffect(() => {
             const liveCashRemaining = startingEquity + salesData.grossRev - estProcurement - totalMarketingExpenditure - salesData.shippingCost - salesData.packCost - salesData.gatewayCost - adminPenalties;
 
             useEffect(() => {
-    simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost, gameSettings: user?.gameSettings || {} };
-}, [campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, lockedPrice, m1.courier, user, totalLoan, baseRetainedMod4, dynamicLandedCost, adminPenalties]);
+                simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost, gameSettings: user?.gameSettings || {} };
+            }, [campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, lockedPrice, m1.courier, user, totalLoan, baseRetainedMod4, dynamicLandedCost, adminPenalties]);
 
             // --- THE CORE MATH ENGINE ---
             const runSimulationTicks = (ticksToRun, currentState) => {
@@ -456,14 +478,14 @@ useEffect(() => {
 
                 // 3x LANDED COST RULE
                 // --- ADMIN CONTROLLED ELASTICITY ---
-const marketPrice = nicheData.opt; 
-let elasticity = 1.0; 
+                const marketPrice = nicheData.opt; 
+                let elasticity = 1.0; 
 
-if (priceThisTick > marketPrice) {
-    const percentOverpriced = (priceThisTick - marketPrice) / marketPrice;
-    const elasticityPenalty = currentState.gameSettings?.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
-    elasticity = Math.max(0.01, 1.0 - (percentOverpriced * elasticityPenalty));
-}
+                if (priceThisTick > marketPrice) {
+                    const percentOverpriced = (priceThisTick - marketPrice) / marketPrice;
+                    const elasticityPenalty = currentState.gameSettings?.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
+                    elasticity = Math.max(0.01, 1.0 - (percentOverpriced * elasticityPenalty));
+                }
                 const brandPower = Math.max(0.5, userBrand / 100);
 
                 let nicheRetentionMod = 0.5; // Medium Frequency default
@@ -633,11 +655,11 @@ if (priceThisTick > marketPrice) {
                 fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
             };
 
-           // --- SMART AUTO-SAVE ENGINE ---
+            // --- SMART AUTO-SAVE ENGINE ---
             const lastSavedTick = useRef(-1);
 
             useEffect(() => {
-                if (!user || user.module !== 5 || liveTick === 0) return;
+                if (!user || user.module < 5 || liveTick === 0) return;
 
                 // PREVENT SAVE ON REFRESH: If this is the initial load, memorize the time and DO NOTHING.
                 if (lastSavedTick.current === -1) {
@@ -691,7 +713,7 @@ if (priceThisTick > marketPrice) {
                             setBaseRetainedMod4(bRetained);
                             setBaseChurnedMod4(bChurned);
 
-                            if (res.data.module === 5 && res.data.liveState) {
+                            if (res.data.module >= 5 && res.data.liveState) {
                                 try {
                                     let l_camp = res.data.liveState.campaigns ? JSON.parse(res.data.liveState.campaigns) : [];
                                     let l_as = res.data.liveState.adSets ? JSON.parse(res.data.liveState.adSets) : [];
@@ -716,12 +738,12 @@ if (priceThisTick > marketPrice) {
                                     setLastOrderTick(l_orderTick); setSalesData(l_sales); setLiveTick(l_tick); setLastPriceTick(l_priceTick); setLockedPrice(l_lockedPrice);
                                     setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
 
-                                   // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
-                                let currentTimeMs = new Date().getTime(); 
-                                let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
-                                let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
+                                    // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
+                                    let currentTimeMs = new Date().getTime(); 
+                                    let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
+                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
 
-                                let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
+                                    let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
                                     if (missedTicks > 4320) missedTicks = 4320; 
 
                                     if (missedTicks > 0) {
@@ -778,7 +800,7 @@ if (priceThisTick > marketPrice) {
                 
                 // LOG LOAN
                 let logPayload = { action: 'logLoan', companyId: user.companyId, rollNo: user.rollNo, loanAmount: takenAmount, tick: liveTick };
-                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: newSearchParams(logPayload) });
+                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(logPayload) });
             };
 
             const handleOrderInventory = () => {
@@ -811,6 +833,30 @@ if (priceThisTick > marketPrice) {
                 alert("Inventory Ordered! Transit times will apply.");
                 
                 syncDataToServer({ shipments: updatedShipments, lastOrderTick: liveTick }); 
+            };
+
+            const submitMod6 = async () => {
+                if (m6.shipping.length < 20 || m6.returns.length < 20 || m6.privacy.length < 20 || m6.terms.length < 20) {
+                    return alert("Please draft comprehensive policies for all four sections.");
+                }
+                setStatus("busy");
+                
+                let payload = {
+                    action: "submitMod6Capstone", 
+                    companyId: user.companyId, 
+                    rollNo: user.rollNo, 
+                    shipping: m6.shipping,
+                    returns: m6.returns,
+                    privacy: m6.privacy,
+                    terms: m6.terms
+                };
+                
+                try {
+                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
+                    setUser({...user, hasSubmittedCurrentModule: true}); 
+                    alert("Policies Submitted. Awaiting Evaluation"); 
+                    setStatus("locked");
+                } catch(e) { alert("Connection Error."); setStatus("idle"); }
             };
 
             const submit = async () => {
@@ -884,7 +930,7 @@ if (priceThisTick > marketPrice) {
                                             <Typography variant="h5" className="mono" color={liveCashRemaining >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(liveCashRemaining).toLocaleString()}</Typography>
                                         </Box>
                                     </Box>
-                                    {user.module === 5 ? (
+                                    {user.module >= 5 ? (
                                         <Box display="flex" flexDirection="column" gap={1}>
                                             <Button variant="contained" onClick={() => {syncDataToServer(); alert("Progress Synced to Cloud!");}} sx={{background: '#10b981', '&:hover': {background: '#059669'}, height: 'fit-content'}}>Save Cloud</Button>
                                         </Box>
@@ -905,7 +951,7 @@ if (priceThisTick > marketPrice) {
                             )}
                             
                             {/* MODULE 5 LOAN WITH ADMIN TOGGLE AND 7 DAY LOCK */}
-                            {user.module === 5 && !user.hasSubmittedCurrentModule && (
+                            {user.module >= 5 && (
                                 <Box sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(245, 158, 11, 0.3)', p: 2, mb: 3}}>
                                     <Grid container spacing={3} alignItems="center">
                                         <Grid item xs={12} md={3}>
@@ -934,20 +980,21 @@ if (priceThisTick > marketPrice) {
                                 </Alert>
                             )}
 
-                            <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)} sx={{mb:3}}>
+                            <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)} variant="scrollable" scrollButtons="auto" sx={{mb:3}}>
                                 <Tab icon={<Icon sx={{fontSize: 20}}>inventory</Icon>} iconPosition="start" label="Procurement" />
                                 {user.module >= 5 && <Tab icon={<Icon sx={{fontSize: 20}}>campaign</Icon>} iconPosition="start" label="Meta Ads" />}
                                 {user.module >= 5 && <Tab icon={<Icon sx={{fontSize: 20}}>groups</Icon>} iconPosition="start" label="Influencer PR" />}
+                                {user.module >= 6 && <Tab icon={<Icon sx={{fontSize: 20}}>gavel</Icon>} iconPosition="start" label="Module 6" />}
                                 <Tab icon={<Icon sx={{fontSize: 20}}>inbox</Icon>} iconPosition="start" label={user?.notifications?.length > 0 ? `Inbox (${user.notifications.length})` : "Inbox"} />
                                 <Tab icon={<Icon sx={{fontSize: 20}}>insights</Icon>} iconPosition="start" label="Historical Performance" />
                             </Tabs>
 
-                            {user.hasSubmittedCurrentModule && (
+                            {user.hasSubmittedCurrentModule && user.module < 5 && (
                                 <div className="m3-card" style={{textAlign: 'center', padding: '80px 20px', border: '2px dashed rgba(59, 130, 246, 0.5)'}}><Icon sx={{fontSize: 80, color: '#3b82f6', mb: 2}}>hourglass_empty</Icon><Typography variant="h4" fontWeight="bold" color="#1e293b" mb={2}>Decision Locked</Typography><Box display="flex" gap={2} justifyContent="center mt-4"><Button variant="contained" size="large" onClick={() => setNavTab(user.module >= 5 ? 3 : 1)} startIcon={<Icon>insights</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5}}>Review Past Results</Button></Box></div>
                             )}
 
                             {/* --- TAB 0: PROCUREMENT --- */}
-                            {navTab === 0 && !user.hasSubmittedCurrentModule && (
+                            {navTab === 0 && (user.module >= 5 || !user.hasSubmittedCurrentModule) && (
                                 <Grid container spacing={4}>
                                     <Grid item xs={12} md={4}>
                                         <Box className="sidebar">
@@ -1067,7 +1114,7 @@ if (priceThisTick > marketPrice) {
                             )}
 
                             {/* --- TAB 1: META ADS MANAGER --- */}
-                            {navTab === 1 && user.module >= 5 && !user.hasSubmittedCurrentModule && (
+                            {navTab === 1 && user.module >= 5 && (
                                 <Grid container spacing={4}>
                                     <Grid item xs={12} sx={{position: 'relative'}}>
                                         {!isBusinessReady && (
@@ -1097,7 +1144,7 @@ if (priceThisTick > marketPrice) {
                             )}
 
                             {/* --- TAB 2: INFLUENCER PR MANAGER --- */}
-                            {navTab === 2 && user.module >= 5 && !user.hasSubmittedCurrentModule && (
+                            {navTab === 2 && user.module >= 5 && (
                                 <Grid container spacing={4}>
                                     <Grid item xs={12} sx={{position: 'relative'}}>
                                         {!isBusinessReady && (
@@ -1119,8 +1166,53 @@ if (priceThisTick > marketPrice) {
                                 </Grid>
                             )}
 
-                            {/* --- TAB 3: INBOX --- */}
-                            {navTab === 3 && user.module >= 5 && (
+                            {/* --- TAB 3: CAPSTONE EVALUATION (MOD 6) --- */}
+                            {navTab === 3 && user.module >= 6 && (
+                                (user.hasSubmittedCurrentModule || user.serverTime > new Date("2026-05-17T23:59:59+05:00").getTime()) ? (
+                                    <div className="max-w-4xl mx-auto bg-white p-12 rounded shadow-lg border-t-4 border-blue-600 mb-8 text-center">
+                                        <Icon sx={{fontSize: 64, color: '#2563eb', mb: 2}}>lock</Icon>
+                                        <Typography variant="h4" fontWeight="bold" color="#1e293b">Capstone Locked</Typography>
+                                        <Typography variant="h6" color="#475569" mt={2}>
+                                            {user.hasSubmittedCurrentModule ? "Your corporate policies have been successfully submitted and are awaiting Board Evaluation." : "The submission deadline (May 17, 2026, 11:59 PM PKT) has passed."}
+                                        </Typography>
+                                    </div>
+                                ) : (
+                                    <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg border-t-4 border-blue-600 animate-fade-in mb-8">
+                                        <Typography variant="h5" fontWeight="bold" mb={1} className="icon-text"><Icon sx={{color: '#2563eb'}}>gavel</Icon> Final Evaluation: Corporate Policy</Typography>
+                                        
+                                        <div className="bg-blue-50 p-5 rounded-lg border border-blue-200 mb-6 mt-4">
+                                            <Typography variant="subtitle2" fontWeight="bold" color="primary">The Scenario:</Typography>
+                                            <Typography variant="body2" color="text.secondary" mt={1}>
+                                                Your business is experiencing steady growth; however, your formal business policies remain largely underdeveloped. To date, operations have been sustained through effective customer management. As your customer base continues to expand, it is now critical to establish comprehensive and well-defined policies for your e-commerce operations. Doing so will help preserve customer trust, mitigate the risk of losing customers, and safeguard your business from potential legal challenges.
+    You are therefore required to develop clear and coherent policies, including a Shipping Policy, Return & Refund Policy, Privacy Policy, and General Terms & Conditions, using the fields provided below. You may follow the structure and guidelines discussed during the class.
+                                            </Typography>
+                                        </div>
+
+                                        <div className="space-y-6 mb-8">
+                                            <div className="bg-gray-50 p-6 rounded border">
+                                                <label className="block text-sm font-bold mb-2 text-gray-700">1. Shipping Policy</label>
+                                                <textarea value={m6.shipping} onChange={(e) => setM6({...m6, shipping: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded border">
+                                                <label className="block text-sm font-bold mb-2 text-gray-700">2. Return & Refund Policy</label>
+                                                <textarea value={m6.returns} onChange={(e) => setM6({...m6, returns: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded border">
+                                                <label className="block text-sm font-bold mb-2 text-gray-700">3. Privacy Policy</label>
+                                                <textarea value={m6.privacy} onChange={(e) => setM6({...m6, privacy: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
+                                            </div>
+                                            <div className="bg-gray-50 p-6 rounded border">
+                                                <label className="block text-sm font-bold mb-2 text-gray-700">4. General Terms & Conditions</label>
+                                                <textarea value={m6.terms} onChange={(e) => setM6({...m6, terms: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
+                                            </div>
+                                        </div>
+                                        <Button variant="contained" size="large" fullWidth onClick={submitMod6} disabled={status === "busy"} sx={{py: 2, background: '#2563eb', fontWeight: 'bold'}}>Submit Final Corporate Policies</Button>
+                                    </div>
+                                )
+                            )}
+
+                            {/* --- TAB 4: INBOX --- */}
+                            {navTab === (user.module >= 6 ? 4 : 3) && user.module >= 5 && (
                                 <div className="m3-card max-w-4xl mx-auto">
                                     <Typography variant="h5" fontWeight="bold" mb={4} className="icon-text"><Icon sx={{color: '#3b82f6'}}>inbox</Icon> Official Communications</Typography>
                                     
@@ -1143,7 +1235,7 @@ if (priceThisTick > marketPrice) {
                             )}
 
                             {/* FLOATING BOTTOM FORECAST BAR */}
-                            {navTab === 0 && !user.hasSubmittedCurrentModule && (
+                            {navTab === 0 && (user.module >= 5 || !user.hasSubmittedCurrentModule) && (
                                 <Box className={`bottom-bar ${minimized ? 'minimized' : ''}`}>
                                     <div className="toggle-btn" onClick={()=>setMinimized(!minimized)}><Icon>{minimized ? 'expand_less' : 'expand_more'}</Icon></div>
                                     <Grid container spacing={3} alignItems="center">
@@ -1171,8 +1263,8 @@ if (priceThisTick > marketPrice) {
                                 </Box>
                             )}
 
-                            {/* TAB 4: HISTORICAL PERFORMANCE */}
-                            {navTab === (user.module >= 5 ? 4 : 1) && (
+                            {/* TAB 5: HISTORICAL PERFORMANCE */}
+                            {navTab === (user.module >= 6 ? 5 : (user.module >= 5 ? 4 : 1)) && (
                                 <div className="m3-card"><PerformanceChart results={user.results} /></div>
                             )}
                         </Container>
