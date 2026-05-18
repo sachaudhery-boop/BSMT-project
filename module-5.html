@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSMT Ecommerce Semester Project</title>
+    <title>BSMT Ecommerce Semester Project - CLOSED</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -20,659 +19,42 @@
             min-height: 100vh; background-attachment: fixed;
         }
         .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-        .sidebar { position: sticky; top: 24px; height: calc(100vh - 48px); overflow-y: auto; padding-right: 8px; }
         .m3-card { 
-            background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
             border-radius: 24px; padding: 24px; margin-bottom: 24px; 
         }
-        .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
         .icon-text { display: flex; align-items: center; gap: 8px; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .bottom-bar {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 95%; max-width: 1400px;
-            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 16px 32px; z-index: 1000;
-            color: white; box-shadow: 0 10px 40px rgba(0,0,0,0.4); transition: transform 0.3s ease-in-out;
-        }
-        .bottom-bar.minimized { transform: translate(-50%, calc(100%)); }
-        .toggle-btn {
-            position: absolute; top: -15px; right: 40px; background: #3b82f6; color: white; border-radius: 50%;
-            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); border: 2px solid white; z-index: 1001;
-        }
-        .stock-indicator {
-            background: #0f172a; padding: 8px 16px; border-radius: 12px; color: white;
-            border: 1px solid rgba(255,255,255,0.2); font-family: 'JetBrains Mono', monospace; font-size: 14px;
-            display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .stock-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; }
-        .stock-pulse.warning { background: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
-        .stock-pulse.danger { background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        // --- GLOBAL DICTIONARIES ---
-        let NICHE_DATA = {}; let COURIERS = {}; let CREATIVE_LIBRARY = []; let INFLUENCERS = [];
-
-        const { useState, useEffect, useRef } = React;
-        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, MenuItem, Button, Box, CircularProgress, Tabs, Tab, Grid, Divider, Stack, Alert, AlertTitle, Slider, Icon, Switch, FormControlLabel, Dialog, DialogTitle, DialogContent, DialogActions, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip } = MaterialUI;
+        const { useState, useEffect } = React;
+        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, Button, Box, Grid, Alert, AlertTitle, Icon, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, Tabs, Tab, Stack } = MaterialUI;
 
         const theme = createTheme({ 
             palette: { primary: { main: '#3b82f6' }, background: { default: 'transparent' } }, 
-            shape: { borderRadius: 16 }, typography: { fontFamily: 'Poppins', h5: { fontWeight: 700 }, h6: { fontWeight: 600 } },
-            components: { MuiTextField: { styleOverrides: { root: { '& .MuiOutlinedInput-root': { background: 'rgba(255,255,255,0.7)' } } } } }
+            shape: { borderRadius: 16 }, typography: { fontFamily: 'Poppins', h5: { fontWeight: 700 }, h6: { fontWeight: 600 } }
         });
-
-        const IconBase = ({ children, size = 24, className = "" }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
-        );
 
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX6MniGhWOILDUQQlxSTPmKxFM8wilkTP3qiQ0Tq3ZbZCVPFJaZcBrJ-Uc_UNZ_YCoNw/exec"; 
 
-        function PerformanceChart({ results }) {
-            const chartRef = useRef(null); const chartInstance = useRef(null);
-            useEffect(() => {
-                if(chartInstance.current) chartInstance.current.destroy();
-                if(!results || results.length === 0) return;
-                const ctx = chartRef.current.getContext('2d');
-                chartInstance.current = new Chart(ctx, {
-                    type: 'line', data: { labels: results.map(r => `Mod ${r[2]}`), datasets: [
-                            { label: 'Net Cash Flow (Rs)', data: results.map(r => r[12]), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
-                            { label: 'Brand Score', data: results.map(r => r[13]), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true, tension: 0.4, yAxisID: 'y1' }
-                        ] },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', grid: {drawOnChartArea: false} } } }
-                });
-            }, [results]);
-            
-            return (
-                <div>
-                    <div style={{height: '300px', marginBottom: '24px'}}><canvas ref={chartRef}></canvas></div>
-                    {results && results.length > 0 && (
-                        <div className="mt-8 border-t border-gray-200 pt-6">
-                            <Typography variant="h6" fontWeight="bold" mb={3} className="icon-text"><Icon color="primary">rate_review</Icon> Instructor Feedback</Typography>
-                            <div className="space-y-4">
-                                {results.map((r, idx) => (
-                                    <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="flex justify-between items-center mb-2 border-b border-slate-200 pb-2">
-                                            <Typography variant="subtitle2" color="primary" fontWeight="bold">Module {r[2]}</Typography>
-                                            <Typography variant="caption" className="mono bg-white px-2 py-1 rounded border shadow-sm" color="#8b5cf6" fontWeight="bold">Brand Score: {r[13]}</Typography>
-                                        </div>
-                                        <Typography variant="body2" color="#334155" sx={{lineHeight: 1.6}}>{r[14] || "No specific feedback provided for this module."}</Typography>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        // ==========================================
-        // REACT COMPONENTS FOR ADS MANAGER
-        // ==========================================
-        function AdsDashboard({ campaigns, adSets, ads, setMetaView, setActiveCampaignId, setActiveAdSetId, setActiveAdId, setCampaigns, setAdSets, setAds }) {
-            const deleteCampaign = (id) => { setCampaigns(prev => prev.filter(c => c.id !== id)); setAdSets(prev => prev.filter(as => as.campaignId !== id)); setAds(prev => prev.filter(a => { const parentAdSet = adSets.find(as => as.id === a.adSetId); return parentAdSet?.campaignId !== id; })); };
-            const deleteAdSet = (id) => { setAdSets(prev => prev.filter(as => as.id !== id)); setAds(prev => prev.filter(a => a.adSetId !== id)); };
-            const deleteAd = (id) => setAds(prev => prev.filter(a => a.id !== id));
-            const toggleCampaignStatus = (id) => { setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: c.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' } : c)); };
-
-            if (campaigns.length === 0) return (<div className="bg-white rounded shadow p-10 text-center text-gray-500 border-t-4 border-purple-500">No active campaigns. Click "+ Create" to begin building your media buying strategy.</div>);
-
-            return (
-                <div className="bg-white rounded shadow overflow-hidden border-t-4 border-purple-500 animate-fade-in">
-                    {campaigns.map((campaign) => (
-                        <div key={campaign.id} className="border-b-4 border-gray-300 last:border-b-0">
-                            <div className={`p-4 flex justify-between items-center border-b border-gray-300 ${campaign.status === 'ACTIVE' ? 'bg-gray-200' : 'bg-gray-100 opacity-75'}`}>
-                                <div className="flex items-center gap-3">
-                                    <Switch size="small" color="primary" checked={campaign.status === 'ACTIVE'} onChange={() => toggleCampaignStatus(campaign.id)} />
-                                    <span className="px-2 py-1 bg-purple-600 text-white text-xs font-bold rounded shadow-sm">CAMPAIGN</span>
-                                    <span className="font-bold text-lg text-gray-900">{campaign.name}</span>
-                                    <span className="text-sm text-gray-600 ml-2 border-l border-gray-400 pl-3">Obj: <span className="font-semibold">{campaign.objective}</span></span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="font-bold text-gray-700 bg-white px-3 py-1 rounded shadow-sm border mr-2 text-xs">{campaign.budgetType === 'CBO' ? `CBO: Rs. ${campaign.campaignBudget}/day` : 'ABO'}</div>
-                                    <button onClick={() => { setActiveCampaignId(campaign.id); setMetaView('edit_campaign'); }} className="text-xs text-blue-600 hover:underline font-bold transition">Edit</button>
-                                    <button onClick={() => deleteCampaign(campaign.id)} className="text-xs text-red-500 hover:underline font-bold transition">Delete</button>
-                                    <div className="w-px h-4 bg-gray-400 mx-1"></div>
-                                    <button onClick={() => { setActiveCampaignId(campaign.id); setMetaView('create_adset'); }} className="text-xs bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1.5 rounded font-bold transition border border-green-300">+ Ad Set</button>
-                                </div>
-                            </div>
-
-                            <div className="bg-white">
-                                {adSets.filter(as => as.campaignId === campaign.id).map((adSet) => {
-                                    const m = adSet.metrics || { spend: 0, impressions: 0, reach: 0, linkClicks: 0, messages: 0, purchases: 0, revenue: 0 };
-                                    const frequency = m.reach > 0 ? (m.impressions / m.reach).toFixed(2) : '0.00';
-                                    const ctr = m.impressions > 0 ? ((m.linkClicks / m.impressions) * 100).toFixed(2) : '0.00';
-                                    const roas = m.spend > 0 ? (m.revenue / m.spend).toFixed(2) : '0.00';
-
-                                    return (
-                                        <div key={adSet.id} className={`pl-6 pr-6 py-4 border-b border-gray-200 last:border-b-0 block ${adSet.status === 'ACTIVE' && campaign.status === 'ACTIVE' ? 'bg-white' : 'bg-gray-50 opacity-60'}`}>
-                                            <div className="flex justify-between items-center mb-3">
-                                                <div className="flex items-center"><span className="text-gray-400 mr-2">↳</span><span className="px-2 py-1 text-[10px] font-bold rounded mr-3 bg-gray-100 text-gray-600 border border-gray-300 uppercase tracking-wide">{adSet.funnelStage} AUDIENCE</span><span className="font-semibold text-gray-800">{adSet.name}</span><span className="text-xs text-gray-500 ml-3">📍 {adSet.location} | 👥 {adSet.age} | 🎯 {adSet.interests}</span></div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="text-sm font-medium text-gray-600 mr-2">{campaign.budgetType === 'ABO' ? `Budget: Rs. ${adSet.budget}/day` : <span className="italic text-gray-400">CBO Dist.</span>}</div>
-                                                    <button onClick={() => { setActiveAdSetId(adSet.id); setMetaView('edit_adset'); }} className="text-xs text-blue-500 hover:underline font-bold transition">Edit</button>
-                                                    <button onClick={() => deleteAdSet(adSet.id)} className="text-xs text-red-400 hover:underline font-bold transition">Delete</button>
-                                                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                                                    <button onClick={() => { setActiveAdSetId(adSet.id); setMetaView('create_ad'); }} className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded font-bold transition border border-blue-200">+ Ad</button>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between bg-slate-50 p-3 rounded border border-slate-200 text-center shadow-inner ml-6 mb-3">
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Spend</div><div className="font-bold text-red-500">Rs. {m.spend.toFixed(0)}</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Impr.</div><div className="font-bold text-gray-800">{m.impressions}</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Reach</div><div className="font-bold text-gray-800">{m.reach}</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Freq.</div><div className="font-bold text-gray-800">{frequency}</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Clicks</div><div className="font-bold text-blue-600">{m.linkClicks}</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">CTR</div><div className="font-bold text-gray-800">{ctr}%</div></div>
-                                                <div className="flex-1 border-r border-gray-300"><div className="text-[10px] text-gray-500 font-bold uppercase">Purchases</div><div className="font-bold text-green-600">{m.purchases}</div></div>
-                                                <div className="flex-1"><div className="text-[10px] text-gray-500 font-bold uppercase">ROAS</div><div className="font-bold text-gray-800">{roas}x</div></div>
-                                            </div>
-                                            <div className="ml-10 space-y-1">
-                                                {ads.filter(a => a.adSetId === adSet.id).map(ad => {
-                                                    const cInfo = CREATIVE_LIBRARY.find(c => c.id === ad.creativeId);
-                                                    return (
-                                                    <div key={ad.id} className="flex justify-between items-center text-xs bg-white p-2 rounded border border-gray-100 shadow-sm">
-                                                        <div className="flex items-center gap-2"><span className="text-gray-300">↳</span><span className="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-bold text-[9px]">AD</span><span className="font-medium text-gray-800">{ad.name}</span><span className="text-[10px] text-purple-600 bg-purple-50 px-1 rounded border border-purple-100">{cInfo?.name}</span></div>
-                                                        <div className="flex items-center gap-3"><button onClick={() => { setActiveAdId(ad.id); setMetaView('edit_ad'); }} className="text-blue-400 hover:underline font-bold">Edit</button><button onClick={() => deleteAd(ad.id)} className="text-red-400 hover:underline font-bold">Delete</button></div>
-                                                    </div>
-                                                )})}
-                                                {ads.filter(a => a.adSetId === adSet.id).length === 0 && (<div className="text-xs text-red-500 italic mt-2 bg-red-50 p-2 rounded border border-red-100">⚠️ No active ads created. This Ad Set will not spend money or deliver.</div>)}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                {adSets.filter(as => as.campaignId === campaign.id).length === 0 && (<div className="pl-12 py-4 text-sm text-red-500 italic bg-red-50">⚠️ No Audience Ad Sets created. Campaign is inactive.</div>)}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            );
-        }
-
-        function CreateCampaign({ metaView, activeCampaignId, campaigns, setCampaigns, setMetaView, setActiveCampaignId }) {
-            const isEditing = metaView === 'edit_campaign'; const existingData = isEditing ? campaigns.find(c => c.id === activeCampaignId) : null;
-            const [formData, setFormData] = useState({ name: existingData?.name || 'Winter Collection 2026', objective: existingData?.objective || 'SALES', budgetType: existingData?.budgetType || 'CBO', campaignBudget: existingData?.campaignBudget || 5000 });
-            const handleSave = () => {
-                if (isEditing && activeCampaignId) { setCampaigns(prev => prev.map(c => c.id === activeCampaignId ? { ...c, ...formData } : c)); setMetaView('dashboard'); } 
-                else { const newId = 'camp_' + Date.now(); setCampaigns(prev => [{ id: newId, status: 'ACTIVE', ...formData }, ...prev]); setActiveCampaignId(newId); setMetaView('create_adset'); }
-            };
-            return (
-                <div className="max-w-3xl mx-auto bg-white p-8 rounded shadow-lg border-t-4 border-purple-500 animate-fade-in">
-                    <div className="mb-8 border-b pb-4 flex items-center justify-between"><h2 className="text-2xl font-bold text-gray-800">{isEditing ? 'Edit Campaign' : 'Step 1: Campaign Strategy'}</h2><span className="bg-purple-100 text-purple-800 text-xs font-bold px-3 py-1 rounded-full">CAMPAIGN CREATION</span></div>
-                    <div className="space-y-6 mb-8">
-                        <div><label className="block text-sm font-bold mb-2 text-gray-700">Campaign Name</label><input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none" /></div>
-                        <div><label className="block text-sm font-bold mb-2 text-gray-700">Objective</label><select value={formData.objective} onChange={(e) => setFormData({...formData, objective: e.target.value})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none bg-white"><option value="AWARENESS">Awareness (Cheap impressions, low action intent)</option><option value="TRAFFIC">Traffic (Cheap link clicks, low purchase intent)</option><option value="SALES">Sales (Expensive CPMs, targets actual buyers)</option></select></div>
-                        <div className="bg-gray-50 p-6 rounded border">
-                            <label className="block text-sm font-bold mb-2 text-gray-700">Budget Strategy</label>
-                            <div className="flex gap-4 mb-4">
-                                <label className={`flex-1 p-4 border rounded cursor-pointer transition ${formData.budgetType === 'CBO' ? 'bg-purple-50 border-purple-500' : 'bg-white'}`}><input type="radio" name="budgetType" value="CBO" checked={formData.budgetType === 'CBO'} onChange={() => setFormData({...formData, budgetType: 'CBO'})} className="mr-2" /><strong>CBO</strong> (Algorithm distributes budget)</label>
-                                <label className={`flex-1 p-4 border rounded cursor-pointer transition ${formData.budgetType === 'ABO' ? 'bg-purple-50 border-purple-500' : 'bg-white'}`}><input type="radio" name="budgetType" value="ABO" checked={formData.budgetType === 'ABO'} onChange={() => setFormData({...formData, budgetType: 'ABO'})} className="mr-2" /><strong>ABO</strong> (You control Ad Set budgets)</label>
-                            </div>
-                            {formData.budgetType === 'CBO' && (<div><label className="block text-sm font-bold mb-2 text-gray-700">Daily Campaign Budget (PKR)</label><input type="number" value={formData.campaignBudget} onChange={(e) => setFormData({...formData, campaignBudget: Number(e.target.value)})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none" /></div>)}
-                        </div>
-                    </div>
-                    <div className="flex justify-between pt-4 border-t"><button onClick={() => setMetaView('dashboard')} className="px-6 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 font-bold rounded transition">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded shadow transition">{isEditing ? 'Save Changes' : 'Save & Continue to Ad Set'}</button></div>
-                </div>
-            );
-        }
-
-        function CreateAdSet({ metaView, activeAdSetId, activeCampaignId, adSets, campaigns, setAdSets, setMetaView, setActiveAdSetId }) {
-            const isEditing = metaView === 'edit_adset'; const existingData = isEditing ? adSets.find(as => as.id === activeAdSetId) : null;
-            const parentCampaignId = isEditing ? existingData?.campaignId : activeCampaignId; const parentCampaign = campaigns.find(c => c.id === parentCampaignId);
-            const [formData, setFormData] = useState({ name: existingData?.name || 'Broad Audience - Cold', funnelStage: existingData?.funnelStage || 'COLD', budget: existingData?.budget || 2000, location: existingData?.location || 'PK_BROAD', age: existingData?.age || '18-65', interests: existingData?.interests || 'NONE' });
-
-            const handleSave = () => {
-                if (isEditing && activeAdSetId) { setAdSets(prev => prev.map(as => as.id === activeAdSetId ? { ...as, ...formData } : as)); setMetaView('dashboard'); } 
-                else { const newId = 'adset_' + Date.now(); setAdSets(prev => [...prev, { id: newId, campaignId: parentCampaignId, status: 'ACTIVE', ...formData, metrics: { spend: 0, impressions: 0, reach: 0, linkClicks: 0, messages: 0, purchases: 0, revenue: 0 } }]); setActiveAdSetId(newId); setMetaView('create_ad'); }
-            };
-            return (
-                <div className="max-w-3xl mx-auto bg-white p-8 rounded shadow-lg border-t-4 border-purple-500 animate-fade-in">
-                    <div className="mb-8 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800">{isEditing ? 'Edit Ad Set' : 'Step 2: Ad Set (Audience & Targeting)'}</h2><p className="text-gray-500 text-sm mt-1">Campaign: {parentCampaign?.name}</p></div>
-                    <div className="space-y-6 mb-8">
-                        <div><label className="block text-sm font-bold mb-2 text-gray-700">Ad Set Name</label><input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none" /></div>
-                        <div className="bg-gray-50 p-6 rounded border">
-                            <label className="block text-sm font-bold mb-2 text-gray-700">Audience Strategy</label>
-                            <select value={formData.funnelStage} onChange={(e) => setFormData({...formData, funnelStage: e.target.value})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none bg-white mb-4"><option value="COLD">Cold (Prospecting - Never heard of you)</option><option value="WARM">Warm (Engaged with IG/FB, Watched Video)</option><option value="RETARGETING">Retargeting (Website Visitors, Add to Cart)</option></select>
-                            {parentCampaign?.budgetType === 'ABO' ? (<div><label className="block text-sm font-bold mb-2 text-gray-700">Daily Ad Set Budget (PKR)</label><input type="number" value={formData.budget} onChange={(e) => setFormData({...formData, budget: Number(e.target.value)})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none" /></div>) : (<div className="bg-purple-50 text-purple-800 p-3 rounded text-sm border border-purple-200">🔒 <strong>Budget is locked.</strong> You selected CBO at the campaign level.</div>)}
-                        </div>
-                        <div className="bg-gray-50 p-6 rounded border">
-                            <h4 className="font-bold text-gray-800 mb-4 border-b pb-2">Audience Definition</h4>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div><label className="block text-sm font-bold mb-2 text-gray-700">Location</label><select value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white"><option value="PK_BROAD">All Pakistan</option><option value="PK_TIER_1">Tier 1 (KHI, LHR, ISB)</option><option value="PK_TIER_2">Tier 2 Cities</option><option value="KARACHI">Karachi Only</option><option value="LAHORE">Lahore Only</option></select></div>
-                                <div><label className="block text-sm font-bold mb-2 text-gray-700">Age Range</label><select value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white"><option value="18-65">18-65+ (Broad)</option><option value="18-24">18-24</option><option value="25-34">25-34</option><option value="35-50">35-50</option></select></div>
-                            </div>
-                            <label className="block text-sm font-bold mb-2 text-gray-700">Interests / Demographics</label><select value={formData.interests} onChange={(e) => setFormData({...formData, interests: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white"><option value="NONE">Advantage+ Broad (No restrictions)</option><option value="FASHION">Fashion & Apparel</option><option value="BEAUTY">Health & Beauty</option><option value="TECH">Technology & Gadgets</option><option value="LUXURY">Luxury Goods</option></select>
-                        </div>
-                    </div>
-                    <div className="flex justify-between pt-4 border-t"><button onClick={() => setMetaView('dashboard')} className="px-6 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 font-bold rounded transition">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 font-bold rounded shadow transition">{isEditing ? 'Save Changes' : 'Save & Continue to Ad'}</button></div>
-                </div>
-            );
-        }
-
-        function CreateAd({ metaView, activeAdId, activeAdSetId, ads, adSets, setAds, setMetaView }) {
-            const isEditing = metaView === 'edit_ad'; const existingData = isEditing ? ads.find(a => a.id === activeAdId) : null;
-            const parentAdSetId = isEditing ? existingData?.adSetId : activeAdSetId; const parentAdSet = adSets.find(as => as.id === parentAdSetId);
-            const [formData, setFormData] = useState({ name: existingData?.name || 'Ad 1 - Primary Creative', creativeId: existingData?.creativeId || CREATIVE_LIBRARY[0].id });
-            const handleSave = () => {
-                if (isEditing && activeAdId) { setAds(prev => prev.map(a => a.id === activeAdId ? { ...a, ...formData } : a)); setMetaView('dashboard'); } 
-                else { setAds(prev => [...prev, { id: 'ad_' + Date.now(), adSetId: parentAdSetId, status: 'ACTIVE', ...formData }]); setMetaView('dashboard'); }
-            };
-            return (
-                <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg border-t-4 border-purple-500 animate-fade-in">
-                    <div className="mb-8 border-b pb-4"><h2 className="text-2xl font-bold text-gray-800">{isEditing ? 'Edit Ad' : 'Step 3: Ad Level (Creative)'}</h2><p className="text-gray-500 text-sm mt-1">Ad Set: {parentAdSet?.name}</p></div>
-                    <div className="space-y-6 mb-8">
-                        <div><label className="block text-sm font-bold mb-2 text-gray-700">Ad Name</label><input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 outline-none" /></div>
-                        <div>
-                            <h4 className="font-bold text-gray-800 mb-2">The Creative Library</h4><p className="text-sm text-gray-600 mb-4">Select the ad creative format you want to run. Note the Upfront CapEx required.</p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto p-2 border rounded bg-gray-50">
-                                {CREATIVE_LIBRARY.map((creative) => (
-                                    <div key={creative.id} onClick={() => setFormData({...formData, creativeId: creative.id})} className={`p-4 border-2 rounded cursor-pointer transition ${formData.creativeId === creative.id ? 'border-purple-600 bg-purple-50 shadow-md' : 'border-gray-200 bg-white hover:border-purple-300'}`}>
-                                        <div className="font-bold text-gray-800">{creative.name}</div>
-                                        <div className="text-xs mt-2 flex items-center justify-between"><div className="flex items-center gap-1"><span className="text-gray-500">Best for:</span><span className={`px-2 py-0.5 rounded font-semibold text-[10px] ${creative.bestFor === 'AWARENESS' ? 'bg-purple-100 text-purple-700' : creative.bestFor === 'TRAFFIC' ? 'bg-orange-100 text-orange-700' : creative.bestFor === 'RETARGETING' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{creative.bestFor}</span></div><span className="font-bold text-red-500">CapEx: Rs {creative.capex.toLocaleString()}</span></div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-between pt-4 border-t"><button onClick={() => setMetaView('dashboard')} className="px-6 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 font-bold rounded transition">Cancel</button><button onClick={handleSave} className="px-6 py-2 bg-green-500 text-white hover:bg-green-600 font-bold rounded shadow transition">{isEditing ? 'Save Changes' : 'Publish'}</button></div>
-                </div>
-            );
-        }
-
-        // ==========================================
-        // REACT COMPONENT FOR INFLUENCER PR MANAGER
-        // ==========================================
-        function InfluencerDashboard({ hiredInfluencers, setHiredInfluencers, getInfluencerCost, liveCashRemaining }) {
-            const handleHire = (inf) => {
-                const currentCost = getInfluencerCost(inf);
-                if (liveCashRemaining < currentCost) return alert("Insufficient Liquid Cash to hire this creator!");
-                if (!window.confirm(`Are you sure you want to hire ${inf.name}? This will instantly deduct Rs ${currentCost.toLocaleString()} from your Equity.`)) return;
-                setHiredInfluencers(prev => [{ id: 'hire_' + Date.now(), infId: inf.id, hiredAt: Date.now(), hoursActive: 0, spend: currentCost, clicks: 0, purchases: 0, status: 'ACTIVE' }, ...prev]);
-            };
-            return (
-                <div className="bg-white rounded shadow p-6 border-t-4 border-pink-500">
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                        <div><Typography variant="h5" fontWeight="bold" className="icon-text"><Icon sx={{color: '#ec4899'}}>groups</Icon> Influencer PR Directory</Typography><Typography variant="body2" color="text.secondary">Hire creators to drive explosive traffic. Niche alignment dramatically impacts Conversion Rates.</Typography></div>
-                    </Box>
-                    {hiredInfluencers.length > 0 && (
-                        <div className="mb-8">
-                            <Typography variant="subtitle1" fontWeight="bold" mb={2}>Active & Past Campaigns</Typography>
-                            <TableContainer component={Paper} variant="outlined"><Table size="small"><TableHead sx={{background: '#f8fafc'}}><TableRow><TableCell><b>Influencer</b></TableCell><TableCell><b>Status</b></TableCell><TableCell><b>Time Active</b></TableCell><TableCell><b>Upfront Cost</b></TableCell><TableCell><b>Clicks Gen.</b></TableCell><TableCell><b>Purchases</b></TableCell><TableCell><b>Est. CPA</b></TableCell></TableRow></TableHead><TableBody>
-                                        {hiredInfluencers.map(h => {
-                                            const inf = INFLUENCERS.find(i => i.id === h.infId);
-                                            const cpa = h.purchases > 0 ? (h.spend / h.purchases).toFixed(0) : '0';
-                                            return (<TableRow key={h.id} sx={{background: h.status === 'ACTIVE' ? '#fdf2f8' : 'white'}}><TableCell fontWeight="bold">{inf?.name}</TableCell><TableCell><Chip label={h.status} size="small" color={h.status === 'ACTIVE' ? 'success' : 'default'} /></TableCell><TableCell>{h.hoursActive} / {inf?.durationHours} hrs</TableCell><TableCell className="mono text-red-500">Rs {h.spend.toLocaleString()}</TableCell><TableCell className="mono">{h.clicks.toLocaleString()}</TableCell><TableCell className="mono font-bold text-green-600">{h.purchases}</TableCell><TableCell className="mono">Rs {cpa}</TableCell></TableRow>)
-                                        })}
-                                    </TableBody></Table></TableContainer>
-                        </div>
-                    )}
-                    <Typography variant="subtitle1" fontWeight="bold" mb={2}>Available Creators</Typography>
-                    <Grid container spacing={3}>
-                        {INFLUENCERS.map(inf => {
-                            const isHired = hiredInfluencers.some(h => h.infId === inf.id && h.status === 'ACTIVE');
-                            const activeCost = getInfluencerCost(inf);
-                            const hasPriceHike = activeCost > inf.cost;
-                            return (
-                                <Grid item xs={12} sm={6} md={4} key={inf.id}>
-                                    <Box sx={{p: 3, border: '1px solid #e2e8f0', borderRadius: 3, height: '100%', display: 'flex', flexDirection: 'column', position: 'relative', background: 'white'}}>
-                                        <Typography variant="h6" fontWeight="bold">{inf.name}</Typography><Typography variant="caption" sx={{color: '#64748b', display: 'flex', gap: 1, mb: 1}}><span className="bg-slate-100 px-2 py-0.5 rounded">Reach: {(inf.reach/1000000).toFixed(1)}M Followers</span></Typography><Typography variant="body2" color="text.secondary" mb={3} sx={{lineHeight: 1.3, flexGrow: 1}}>{inf.desc}</Typography>
-                                        <Box display="flex" justifyContent="space-between" alignItems="center" mt="auto" pt={2} borderTop="1px dashed #cbd5e1">
-                                            <div><Typography variant="subtitle2" fontWeight="bold" color="error.main">Rs {activeCost.toLocaleString()}</Typography>{hasPriceHike && <Typography variant="caption" color="text.secondary" sx={{fontSize: '9px'}}>Rate raised due to past success!</Typography>}</div>
-                                            <Button variant="contained" size="small" disabled={isHired} onClick={() => handleHire(inf)} sx={{background: isHired ? '#cbd5e1' : '#ec4899', '&:hover': {background: '#db2777'}}}>{isHired ? 'Currently Active' : 'Hire'}</Button>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-                            )
-                        })}
-                    </Grid>
-                </div>
-            );
-        }
-
-        // ==========================================
-        // MAIN MONOLITHIC APP
-        // ==========================================
         function App() {
-            const [view, setView] = useState("auth"); const [authTab, setAuthTab] = useState(0); const [navTab, setNavTab] = useState(0); 
-            const [minimized, setMinimized] = useState(false); const [status, setStatus] = useState("idle"); const [user, setUser] = useState(null); 
+            const SIMULATION_CLOSED = true; 
 
-            const [form, setForm] = useState({ rollNo: "", email: "", password: "", ceoName: "", companyName: "", niche: "Beauty" });
-            const [m1, setM1] = useState({ method: "Local", courier: "Standard", qty: 0, budget: 0, gVal: "", cif: "", duty: "", gstV: "", gstP: "", landed: "", trueU: "", price: 0, gross: "", op: "" });
-            const [m2, setM2] = useState({ useBridge: false, bridgeMethod: "Local", bridgeQty: 0, recurringModel: "", trialStrategy: "", churnStrategy: "", subDiscount: 10 });
-            const [m3, setM3] = useState({ prepaidTarget: 0, checkoutUX: "Guest (1-Click)", foggStrategy: "", asymmetryScript: "", cccStrategy: "", useWinBack: false });
-            const [stack, setStack] = useState([]); const [m4Strategy, setM4Strategy] = useState(''); 
-            const [m6, setM6] = useState({ shipping: "", returns: "", privacy: "", terms: "" });
+            const [view, setView] = useState("auth"); 
+            const [authTab, setAuthTab] = useState(0); 
+            const [navTab, setNavTab] = useState(0); 
+            const [status, setStatus] = useState("idle"); 
+            const [user, setUser] = useState(null); 
+            const [form, setForm] = useState({ rollNo: "", email: "", password: ""});
             
-            const [loanAmount, setLoanAmount] = useState(0);
-            const [totalLoan, setTotalLoan] = useState(0); 
-            const [lastLoanTick, setLastLoanTick] = useState(-999);
-            
-            const [baseRetainedMod4, setBaseRetainedMod4] = useState(0);
-            const [baseChurnedMod4, setBaseChurnedMod4] = useState(0);
+            const [sheetLiquidCash, setSheetLiquidCash] = useState(0);
 
-            // --- MOD 5 ADS, INFLUENCER, LOGISTICS & TRACKING STATE ---
-            const [metaView, setMetaView] = useState('dashboard');
-            const [activeCampaignId, setActiveCampaignId] = useState(null);
-            const [activeAdSetId, setActiveAdSetId] = useState(null);
-            const [activeAdId, setActiveAdId] = useState(null);
-            
-            const [campaigns, setCampaigns] = useState([]);
-            const [adSets, setAdSets] = useState([]);
-            const [ads, setAds] = useState([]);
-            const [hiredInfluencers, setHiredInfluencers] = useState([]);
-
-            const [shipments, setShipments] = useState([]); 
-            const [lastOrderTick, setLastOrderTick] = useState(-999); 
-            const [lastPriceTick, setLastPriceTick] = useState(-999); 
-            const [lockedPrice, setLockedPrice] = useState(0); 
-            const [liveTick, setLiveTick] = useState(0);
-            
-            const [salesData, setSalesData] = useState({ organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 });
-
-            // --- ADMIN DYNAMIC CONTROLS ---
-            const isLoanEnabled = user?.gameSettings?.loanEnabled !== false;
-            const adminPenalties = (user?.penalties || []).filter(p => p.companyId === 'ALL' || (user && p.companyId === user.companyId)).reduce((sum, p) => sum + p.amount, 0);
-
-            useEffect(() => {
-                const handleBeforeUnload = (e) => {
-                    if (user && user.module >= 5) { e.preventDefault(); e.returnValue = ''; }
-                };
-                window.addEventListener('beforeunload', handleBeforeUnload);
-                return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-            }, [user]);
-
-            const simState = useRef(null);
-
-            // THE ORIGINAL STABLE GAME LOOP
-            useEffect(() => {
-                // Reads speed from Admin Panel, default to 20 mins if missing
-                const currentTickSpeed = user?.gameSettings?.tickSpeedMs || 1200000; 
-
-                const timer = setInterval(() => {
-                    if (!user || user.module < 5 || !simState.current) return;
-                    const res = runSimulationTicks(1, simState.current);
-                    setAdSets(res.newAdSets); 
-                    setHiredInfluencers(res.newInfluencers); 
-                    setSalesData(res.newSalesData); 
-                    setLiveTick(res.newTick);
-                }, currentTickSpeed); 
-
-                return () => clearInterval(timer);
-            }, [user]);
-            
-            const cleanNum = (val) => String(val).replace(/[^0-9.]/g, '');
-
-            const calculateShipmentCost = (method, qty) => {
-                if (!qty || qty <= 0 || !user) return 0;
-                const sData = NICHE_DATA[user.niche];
-                const fobCost = method === 'Local' ? sData.local : sData.china;
-                const goodsValue = fobCost * qty;
-                const weight = sData.kg * qty; const cbm = sData.cbm * qty;
-                const freight = method === 'Local' ? (150 * qty) : (method === 'China_Air' ? 3100 * weight : 90000 * cbm);
-                const c_and_f = goodsValue + freight;
-                const insurance = method === 'Local' ? 0 : (c_and_f * 0.01);
-                const cif = c_and_f + insurance;
-                const dutyPaid = method === 'Local' ? 0 : (cif * (sData.duty / 100));
-                const valForGst = cif + dutyPaid;
-                const gstPaid = valForGst * 0.18;
-                const miscFees = method === 'Local' ? 0 : 22800; 
-                return cif + dutyPaid + gstPaid + miscFees; 
-            };
-
-            const getInfluencerCost = (inf) => {
-                if (!user) return inf.cost;
-                const actualCpa = Math.floor(NICHE_DATA[user.niche].cpa * 1.5);
-                const hasSuccess = hiredInfluencers.some(h => h.infId === inf.id && h.status === 'COMPLETED' && h.purchases > 0 && (h.spend / h.purchases) <= actualCpa);
-                return hasSuccess ? inf.cost * 1.5 : inf.cost;
-            };
-
-            const s = user && NICHE_DATA[user.niche] ? NICHE_DATA[user.niche] : {}; 
-            const c = user && COURIERS[m1.courier] ? COURIERS[m1.courier] : (COURIERS["Standard"] || {}); 
-            
-            const activeAdCapex = ads.reduce((sum, ad) => { const cData = CREATIVE_LIBRARY.find(x => x.id === ad.creativeId); return sum + (cData ? cData.capex : 0); }, 0);
-            const totalAdSpendAccrued = adSets.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0);
-            const totalInfSpend = hiredInfluencers.reduce((sum, h) => sum + h.spend, 0);
-            const totalMarketingExpenditure = activeAdCapex + totalAdSpendAccrued + totalInfSpend;
-
-            const totalActualSales = salesData.organic + adSets.reduce((sum, as) => sum + (as.metrics?.purchases || 0), 0) + hiredInfluencers.reduce((sum, h) => sum + h.purchases, 0);
-            const codRateDecimal = user ? Math.max(0.65, 0.95 - (user.brand / 150) * 0.30) : 0;
-            const actualCodShare = Math.max(0, codRateDecimal - (user?.module >= 3 ? m3.prepaidTarget / 100 : 0)); 
-            const projectedLockedCash = 0; // Disabled to prevent student confusion
-            
-            const estProcurement = shipments.reduce((sum, sh) => sum + sh.totalLandedCost, 0); 
-            const totalQtyProcured = shipments.reduce((sum, sh) => sum + sh.qty, 0);
-            
-            // DYNAMIC LANDED COST CALCULATION (FOR 3x MULTIPLIER RULE)
-            const dynamicLandedCost = totalQtyProcured > 0 ? (estProcurement / totalQtyProcured) : (parseFloat(m1.trueU) || 0);
-
-            const oldLandedCost = user && user.pendingDecision && !user.hasSubmittedCurrentModule ? parseFloat(user.pendingDecision.landed) : 0;
-            
-            const startingEquity = user ? parseInt(user.cash) + oldLandedCost + (user.module >= 5 ? totalLoan : loanAmount) : 0;
-            
-            // LIVE CASH DEDUCTS ADMIN PENALTIES
-            const liveCashRemaining = startingEquity + salesData.grossRev - estProcurement - totalMarketingExpenditure - salesData.shippingCost - salesData.packCost - salesData.gatewayCost - adminPenalties;
-
-            useEffect(() => {
-                simState.current = { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price: lockedPrice, initialStock: user?.inventory || 0, nicheData: s, courierData: c, userBrand: user?.brand || 100, currentCash: liveCashRemaining, baseRet: baseRetainedMod4, trueLandedCost: dynamicLandedCost, gameSettings: user?.gameSettings || {} };
-            }, [campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, lockedPrice, m1.courier, user, totalLoan, baseRetainedMod4, dynamicLandedCost, adminPenalties]);
-
-            // --- THE CORE MATH ENGINE ---
-            const runSimulationTicks = (ticksToRun, currentState) => {
-                if (!currentState || !currentState.nicheData || !currentState.courierData) return { newAdSets: currentState?.adSets || [], newInfluencers: currentState?.hiredInfluencers || [], newSalesData: currentState?.salesData || { organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 }, newTick: currentState?.liveTick || 0 };
-                let { campaigns, adSets, ads, hiredInfluencers, shipments, salesData, liveTick, price, initialStock, nicheData, courierData, userBrand, currentCash, baseRet, trueLandedCost } = currentState;
-                
-                let newAdSets = JSON.parse(JSON.stringify(adSets));
-                let newInfluencers = JSON.parse(JSON.stringify(hiredInfluencers));
-                let newSalesData = JSON.parse(JSON.stringify(salesData));
-                let newTick = liveTick;
-                let runningCash = currentCash;
-
-                const priceThisTick = parseFloat(price) || 0;
-                if (priceThisTick <= 0) return { newAdSets, newInfluencers, newSalesData, newTick: liveTick + ticksToRun };
-
-                // 3x LANDED COST RULE
-                // --- ADMIN CONTROLLED ELASTICITY ---
-                const marketPrice = nicheData.opt; 
-                let elasticity = 1.0; 
-
-                if (priceThisTick > marketPrice) {
-                    const percentOverpriced = (priceThisTick - marketPrice) / marketPrice;
-                    const elasticityPenalty = currentState.gameSettings?.elasticityFactor !== undefined ? currentState.gameSettings.elasticityFactor : 2.0; 
-                    elasticity = Math.max(0.01, 1.0 - (percentOverpriced * elasticityPenalty));
-                }
-                const brandPower = Math.max(0.5, userBrand / 100);
-
-                let nicheRetentionMod = 0.5; // Medium Frequency default
-                if (nicheData.name === "Supplements" || nicheData.name === "Beauty") nicheRetentionMod = 1.0;
-                else if (nicheData.name === "Electronics" || nicheData.name === "Furniture") nicheRetentionMod = 0.15;
-
-                for(let t=0; t<ticksToRun; t++) {
-                    newTick++;
-                    
-                    const arrivedShipments = shipments.filter(sh => (newTick - sh.orderedAtTick) >= (sh.method === 'Local' ? 0 : (sh.method === 'China_Air' ? 360 : 720)));
-                    const totalStockReceived = (parseInt(initialStock) || 0) + arrivedShipments.reduce((sum, sh) => sum + sh.qty, 0);
-                    
-                    const prevAdPurchases = newAdSets.reduce((sum, as) => sum + (as.metrics?.purchases || 0), 0);
-                    const prevInfPurchases = newInfluencers.reduce((sum, h) => sum + (h.purchases || 0), 0);
-                    const currentInv = Math.max(0, totalStockReceived - prevAdPurchases - prevInfPurchases - newSalesData.organic - (newSalesData.retained || 0));
-
-                    const isBankrupt = runningCash <= 0;
-
-                    let demandThisHour = 0;
-                    
-                    // Base Organic
-                    const organicHourlyRate = ((Math.floor(userBrand * 4.0)) / 720) * elasticity;
-                    const newOrganicThisHour = Math.floor(organicHourlyRate) + (Math.random() < (organicHourlyRate % 1) ? 1 : 0);
-                    demandThisHour += newOrganicThisHour;
-
-                    // Historical Mod 4 Retention + New Mod 5 Retention Dripping
-                    const historicalRetainedRate = (baseRet * nicheRetentionMod) / 720;
-                    const currentRetainedRate = (newSalesData.delivered * 0.0002); 
-                    const totalRetentionRate = (historicalRetainedRate + currentRetainedRate) * brandPower * elasticity;
-                    
-                    const retainedDemandThisHour = Math.floor(totalRetentionRate) + (Math.random() < (totalRetentionRate % 1) ? 1 : 0);
-                    demandThisHour += retainedDemandThisHour;
-
-                    let infDemandMap = {};
-                    newInfluencers.forEach(hi => {
-                        if (hi.status !== 'ACTIVE') return;
-                        const infData = INFLUENCERS.find(i => i.id === hi.infId);
-                        if (!infData) return;
-                        const clicksPerHour = Math.floor((infData.reach * 0.05) / infData.durationHours); 
-                        const hourlyVariance = 0.5 + Math.random(); // RNG multiplier
-                        const cvr = (infData.niche === nicheData.name ? infData.baseCvr : infData.broadCvr) * elasticity * brandPower * hourlyVariance;
-                        const purchasesThisHour = Math.floor(clicksPerHour * cvr) + (Math.random() < (clicksPerHour * cvr % 1) ? 1 : 0);
-                        infDemandMap[hi.id] = { clicks: clicksPerHour, purchases: purchasesThisHour };
-                        demandThisHour += purchasesThisHour;
-                    });
-
-                    let adDemandMap = {};
-                    newAdSets.forEach(adSet => {
-                        if (adSet.status !== 'ACTIVE') return;
-                        const parentCampaign = campaigns.find(ca => ca.id === adSet.campaignId);
-                        if (!parentCampaign || parentCampaign.status !== 'ACTIVE') return;
-
-                        let hourlyBudget = parentCampaign.budgetType === 'ABO' ? adSet.budget / 24 : (parentCampaign.campaignBudget / newAdSets.filter(a => a.campaignId === parentCampaign.id && a.status === 'ACTIVE').length) / 24;
-                        if (hourlyBudget <= 0) return;
-                        if (isBankrupt) hourlyBudget = 0; 
-                        
-                        const activeAds = ads.filter(a => a.adSetId === adSet.id && a.status === 'ACTIVE');
-                        if (activeAds.length === 0 || hourlyBudget === 0) {
-                            adDemandMap[adSet.id] = { spend: 0, impressions: 0, reach: 0, linkClicks: 0, messages: 0, purchases: 0 };
-                            return;
-                        }
-
-                        const m = adSet.metrics || { spend: 0, impressions: 0, reach: 0, linkClicks: 0, messages: 0, purchases: 0, revenue: 0 };
-                        const currentFrequency = m.reach > 0 ? (m.impressions / m.reach) : 1;
-                        let fatiguePenalty = currentFrequency > 4.0 ? 0.2 : (currentFrequency > 3.0 ? 0.5 : (currentFrequency > 2.0 ? 0.8 : 1.0)); 
-
-                        let totalPowerScore = 0; let alignmentPenalty = 1.0; let policyFlag = false;
-                        activeAds.forEach(ad => {
-                            const creative = CREATIVE_LIBRARY.find(cr => cr.id === ad.creativeId);
-                            if (creative) {
-                                totalPowerScore += creative.powerScore;
-                                if (parentCampaign.objective === 'SALES' && creative.bestFor === 'AWARENESS') alignmentPenalty *= 0.5;
-                                if (adSet.funnelStage === 'RETARGETING' && creative.bestFor === 'AWARENESS') alignmentPenalty *= 0.4;
-                                if (creative.id === 'c8') policyFlag = true; 
-                            } else { totalPowerScore += 5; }
-                        });
-                        
-                        let cpm = 200 + (adSet.location.includes('TIER_1') || adSet.location === 'KARACHI' ? 150 : 0) + (adSet.interests !== 'NONE' ? 100 : 0) + (parentCampaign.objective === 'SALES' ? 120 : 0);
-                        if (policyFlag) cpm *= 1.5; 
-
-                        const impressionsThisHour = Math.floor((hourlyBudget / cpm) * 1000);
-                        let ctr = (0.005 + ((totalPowerScore / activeAds.length) * 0.001) + (parentCampaign.objective === 'TRAFFIC' ? 0.005 : 0) + (adSet.funnelStage === 'RETARGETING' ? 0.01 : 0)) * fatiguePenalty; 
-                        const clicksThisHour = Math.floor(impressionsThisHour * ctr);
-
-                        let cvr = (0.001 + (parentCampaign.objective === 'SALES' ? 0.008 : 0) + (adSet.funnelStage === 'RETARGETING' ? 0.02 : 0) + (adSet.funnelStage === 'WARM' ? 0.005 : 0) + (adSet.funnelStage === 'COLD' && adSet.interests !== 'NONE' ? 0.003 : 0)) * alignmentPenalty * fatiguePenalty * brandPower * elasticity;
-                        const actualPurchasesThisHour = Math.floor(clicksThisHour * cvr) + (Math.random() < (clicksThisHour * cvr % 1) ? 1 : 0);
-
-                        let newReachPct = m.spend > 50000 ? 0.2 : (m.spend > 10000 ? 0.5 : 0.8);
-                        if (adSet.funnelStage === 'RETARGETING') newReachPct = 0.1; 
-
-                        adDemandMap[adSet.id] = { spend: hourlyBudget, impressions: impressionsThisHour, reach: Math.floor(impressionsThisHour * newReachPct), linkClicks: clicksThisHour, messages: Math.floor(clicksThisHour * 0.1), purchases: actualPurchasesThisHour };
-                        demandThisHour += actualPurchasesThisHour;
-                        
-                        runningCash -= hourlyBudget; 
-                    });
-
-                    // FULFILLMENT & STOCKOUT ENGINE
-                    let fulfillmentRatio = 1.0;
-                    if (demandThisHour > currentInv) { 
-                        fulfillmentRatio = currentInv > 0 ? (currentInv / demandThisHour) : 0; 
-                        newSalesData.stockouts = (newSalesData.stockouts || 0) + (demandThisHour - currentInv); // Capture Missed Sales
-                    }
-
-                    const fulfilledOrganic = Math.floor(newOrganicThisHour * fulfillmentRatio);
-                    const fulfilledRetained = Math.floor(retainedDemandThisHour * fulfillmentRatio);
-                    newSalesData.retained = (newSalesData.retained || 0) + fulfilledRetained;
-
-                    let fulfilledInf = 0; let fulfilledAds = 0;
-
-                    newInfluencers = newInfluencers.map(hi => {
-                        if (hi.status !== 'ACTIVE') return hi;
-                        const d = infDemandMap[hi.id]; if (!d) return hi;
-                        const fulfilledPurchases = Math.floor(d.purchases * fulfillmentRatio);
-                        fulfilledInf += fulfilledPurchases;
-                        const infData = INFLUENCERS.find(i => i.id === hi.infId);
-                        const newHours = (hi.hoursActive || 0) + 1;
-                        return { ...hi, hoursActive: newHours, clicks: hi.clicks + d.clicks, purchases: hi.purchases + fulfilledPurchases, status: newHours >= infData.durationHours ? 'COMPLETED' : 'ACTIVE' };
-                    });
-
-                    newAdSets = newAdSets.map(adSet => {
-                        const d = adDemandMap[adSet.id]; if (!d) return adSet;
-                        const fulfilledPurchases = Math.floor(d.purchases * fulfillmentRatio);
-                        fulfilledAds += fulfilledPurchases;
-                        const m = adSet.metrics || { spend: 0, impressions: 0, reach: 0, linkClicks: 0, messages: 0, purchases: 0, revenue: 0 };
-                        return { ...adSet, metrics: { spend: m.spend + d.spend, impressions: m.impressions + d.impressions, reach: m.reach + d.reach, linkClicks: m.linkClicks + d.linkClicks, messages: m.messages + d.messages, purchases: m.purchases + fulfilledPurchases, revenue: m.revenue + (fulfilledPurchases * priceThisTick) } };
-                    });
-
-                    const totalFulfilledThisTick = fulfilledOrganic + fulfilledRetained + fulfilledInf + fulfilledAds;
-                    if (totalFulfilledThisTick > 0) {
-                        const expectedDelivered = totalFulfilledThisTick * (1 - courierData.rtoRate);
-                        const deliveredThisTick = Math.floor(expectedDelivered) + (Math.random() < (expectedDelivered % 1) ? 1 : 0);
-                        const rtosThisTick = totalFulfilledThisTick - deliveredThisTick;
-                        const revThisTick = deliveredThisTick * priceThisTick;
-
-                        newSalesData.organic += fulfilledOrganic;
-                        newSalesData.delivered += deliveredThisTick;
-                        newSalesData.rtos += rtosThisTick;
-                        newSalesData.grossRev += revThisTick;
-                        newSalesData.shippingCost += (deliveredThisTick * courierData.ship) + (rtosThisTick * (courierData.ship + courierData.rtoPen));
-                        newSalesData.packCost += totalFulfilledThisTick * nicheData.pack;
-                        newSalesData.gatewayCost += revThisTick * 0.025;
-                        
-                        runningCash += revThisTick - ((deliveredThisTick * courierData.ship) + (rtosThisTick * (courierData.ship + courierData.rtoPen))) - (totalFulfilledThisTick * nicheData.pack) - (revThisTick * 0.025);
-                    }
-                }
-                return { newAdSets, newInfluencers, newSalesData, newTick };
-            };
-
-            const syncDataToServer = (overrides = {}) => {
-                if (!user || user.module < 5) return;
-                
-                const p_shipments = overrides.shipments !== undefined ? overrides.shipments : shipments;
-                const p_lockedPrice = overrides.lockedPrice !== undefined ? overrides.lockedPrice : lockedPrice;
-                const p_lastPriceTick = overrides.lastPriceTick !== undefined ? overrides.lastPriceTick : lastPriceTick;
-                const p_lastOrderTick = overrides.lastOrderTick !== undefined ? overrides.lastOrderTick : lastOrderTick;
-                const p_totalLoan = overrides.totalLoan !== undefined ? overrides.totalLoan : totalLoan;
-                const p_lastLoanTick = overrides.lastLoanTick !== undefined ? overrides.lastLoanTick : lastLoanTick;
-
-                let payload = {
-                    action: "syncAds", companyId: user.companyId, rollNo: user.rollNo, niche: user.niche,
-                    liquidCash: liveCashRemaining, totalSpend: totalMarketingExpenditure,
-                    campaigns: JSON.stringify(campaigns), adSets: JSON.stringify(adSets), ads: JSON.stringify(ads),
-                    influencers: JSON.stringify(hiredInfluencers), shipments: JSON.stringify(p_shipments),
-                    lastOrderTick: p_lastOrderTick, salesData: JSON.stringify(salesData), liveTick: liveTick, lastSyncMs: new Date().getTime(), 
-                    lastPriceTick: p_lastPriceTick, lockedPrice: p_lockedPrice, totalLoan: p_totalLoan, lastLoanTick: p_lastLoanTick
-                };
-                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
-            };
-
-            // --- SMART AUTO-SAVE ENGINE ---
-            const lastSavedTick = useRef(-1);
-
-            useEffect(() => {
-                if (!user || user.module < 5 || liveTick === 0) return;
-
-                // PREVENT SAVE ON REFRESH: If this is the initial load, memorize the time and DO NOTHING.
-                if (lastSavedTick.current === -1) {
-                    lastSavedTick.current = liveTick;
-                    return; 
-                }
-
-                // Save strictly when the game engine actively ticks time forward.
-                if (liveTick > lastSavedTick.current) {
-                    syncDataToServer();
-                    lastSavedTick.current = liveTick;
-                }
-            }, [liveTick]);
+            // Regulated controlled text input state
+            const [reportText, setReportText] = useState("");
+            const [reportSubmitted, setReportSubmitted] = useState(false);
 
             useEffect(() => {
                 const saved = localStorage.getItem('student_creds');
@@ -689,600 +71,277 @@
                     if(isLogin) {
                         const res = await fetch(`${SCRIPT_URL}?action=login&email=${encodeURIComponent(em)}&password=${encodeURIComponent(pw)}`).then(r => r.json());
                         if(res.status === "success") { 
-                            NICHE_DATA = res.data.nicheData; COURIERS = res.data.couriers; CREATIVE_LIBRARY = res.data.creativeLibrary; INFLUENCERS = res.data.influencers;
                             res.data.module = parseInt(res.data.module, 10);
                             setUser(res.data); 
                             
-                            if (res.data.pendingDecision) {
-                                const pd = res.data.pendingDecision;
-                                let ux = "Guest (1-Click)", prep = 0, wb = false, ccc = pd.recurringModel;
-                                if (res.data.module === 3 && pd.recurringModel.startsWith("[")) {
-                                    const m = pd.recurringModel.match(/\[UX: (.*?) \| Prepaid: (\d+)% \| WinBack: (YES|NO)\] CCC: (.*)/);
-                                    if (m) { ux = m[1]; prep = parseInt(m[2]); wb = (m[3]==='YES'); ccc = m[4]; }
-                                }
-                                setM1({ method: pd.method === "N/A" ? "Local" : pd.method, courier: pd.courier === "N/A" ? "Standard" : pd.courier, qty: pd.qty, budget: pd.budget, gVal: pd.gVal, cif: pd.cif, duty: pd.duty, gstV: pd.gstV, gstP: pd.gstP, landed: pd.landed, trueU: pd.trueU, price: pd.price, gross: pd.gross, op: pd.op });
-                                setM2({ useBridge: pd.bridgeQty > 0, bridgeMethod: pd.bridgeMethod || "Local", bridgeQty: pd.bridgeQty || 0, recurringModel: pd.recurringModel, trialStrategy: pd.trialStrategy, churnStrategy: pd.churnStrategy, subDiscount: pd.subDiscount });
-                                setM3({ prepaidTarget: prep, checkoutUX: ux, foggStrategy: pd.trialStrategy, asymmetryScript: pd.churnStrategy, cccStrategy: ccc, useWinBack: wb });
-                            } else if (res.data.module > 1 && res.data.lastBudget) {
-                                setM1(prev => ({...prev, budget: res.data.module >= 5 ? 0 : res.data.lastBudget, price: res.data.lastPrice}));
+                            if (res.data.isFinalReportSubmitted) {
+                                setReportSubmitted(true);
                             }
 
-                            const mod4Results = res.data.results ? res.data.results.find(r => r[2] == 4) : null;
-                            const bRetained = mod4Results ? parseInt(mod4Results[15]) || 0 : 0;
-                            const bChurned = mod4Results ? parseInt(mod4Results[16]) || 0 : 0;
-                            setBaseRetainedMod4(bRetained);
-                            setBaseChurnedMod4(bChurned);
-
-                            if (res.data.module >= 5 && res.data.liveState) {
-                                try {
-                                    let l_camp = res.data.liveState.campaigns ? JSON.parse(res.data.liveState.campaigns) : [];
-                                    let l_as = res.data.liveState.adSets ? JSON.parse(res.data.liveState.adSets) : [];
-                                    let l_ads = res.data.liveState.ads ? JSON.parse(res.data.liveState.ads) : [];
-                                    let l_inf = res.data.liveState.influencers ? JSON.parse(res.data.liveState.influencers) : [];
-                                    
-                                    let parsedShipments = [];
-                                    if (res.data.liveState.shipments) {
-                                        const rawShip = JSON.parse(res.data.liveState.shipments);
-                                        parsedShipments = Array.isArray(rawShip) ? rawShip : [];
-                                    }
-
-                                    let l_sales = res.data.liveState.salesData ? JSON.parse(res.data.liveState.salesData) : { organic: 0, delivered: 0, rtos: 0, grossRev: 0, shippingCost: 0, packCost: 0, gatewayCost: 0, stockouts: 0, retained: 0 };
-                                    let l_tick = res.data.liveState.liveTick !== undefined && res.data.liveState.liveTick !== "" ? parseInt(res.data.liveState.liveTick) : 0;
-                                    let l_orderTick = res.data.liveState.lastOrderTick !== undefined && res.data.liveState.lastOrderTick !== "" ? parseInt(res.data.liveState.lastOrderTick) : -999;
-                                    let l_priceTick = res.data.liveState.lastPriceTick !== undefined && res.data.liveState.lastPriceTick !== "" ? parseInt(res.data.liveState.lastPriceTick) : -999;
-                                    let l_lockedPrice = res.data.liveState.lockedPrice !== undefined && res.data.liveState.lockedPrice !== "" ? parseFloat(res.data.liveState.lockedPrice) : 0;
-                                    let l_totalLoan = res.data.liveState.totalLoan !== undefined && res.data.liveState.totalLoan !== "" ? parseFloat(res.data.liveState.totalLoan) : 0;
-                                    let l_lastLoanTick = res.data.liveState.lastLoanTick !== undefined && res.data.liveState.lastLoanTick !== "" ? parseInt(res.data.liveState.lastLoanTick) : -999;
-
-                                    setCampaigns(l_camp); setAdSets(l_as); setAds(l_ads); setHiredInfluencers(l_inf); setShipments(parsedShipments);
-                                    setLastOrderTick(l_orderTick); setSalesData(l_sales); setLiveTick(l_tick); setLastPriceTick(l_priceTick); setLockedPrice(l_lockedPrice);
-                                    setTotalLoan(l_totalLoan); setLastLoanTick(l_lastLoanTick);
-
-                                    // FIX: Use client time for both so Google's server clock drift doesn't ruin the math!
-                                    let currentTimeMs = new Date().getTime(); 
-                                    let lastSyncMs = parseInt(res.data.liveState.lastSyncMs) || currentTimeMs;
-                                    let customTickSpeed = res.data.gameSettings?.tickSpeedMs || 1200000; 
-
-                                    let missedTicks = Math.floor((currentTimeMs - lastSyncMs) / customTickSpeed);
-                                    if (missedTicks > 4320) missedTicks = 4320; 
-
-                                    if (missedTicks > 0) {
-                                        const cData = COURIERS[res.data.pendingDecision?.courier] || COURIERS["Standard"];
-                                        const l_startingEquity = parseInt(res.data.cash) + (parseFloat(res.data.pendingDecision?.landed) || 0) + l_totalLoan;
-                                        const l_estProc = parsedShipments.reduce((sum, s) => sum + s.totalLandedCost, 0); 
-                                        const l_marketing = l_camp.reduce((sum, ad) => sum + 0, 0) + l_as.reduce((sum, as) => sum + (as.metrics?.spend || 0), 0) + l_inf.reduce((sum, h) => sum + h.spend, 0);
-                                        
-                                        const l_adminPenalties = (res.data.penalties || []).filter(p => p.companyId === 'ALL' || p.companyId === res.data.companyId).reduce((sum, p) => sum + p.amount, 0);
-                                        const l_cash = l_startingEquity + l_sales.grossRev - l_estProc - l_marketing - l_sales.shippingCost - l_sales.packCost - l_sales.gatewayCost - l_adminPenalties;
-                                        
-                                        const l_trueLandedCost = parsedShipments.length > 0 ? (l_estProc / parsedShipments.reduce((sum, s) => sum + s.qty, 0)) : (parseFloat(res.data.pendingDecision?.trueU) || 0);
-
-                                        const catchUpState = { campaigns: l_camp, adSets: l_as, ads: l_ads, hiredInfluencers: l_inf, shipments: parsedShipments, salesData: l_sales, liveTick: l_tick, price: l_lockedPrice, initialStock: res.data.inventory, nicheData: NICHE_DATA[res.data.niche], courierData: cData, userBrand: res.data.brand, currentCash: l_cash, baseRet: bRetained, trueLandedCost: l_trueLandedCost };
-                                        const advanced = runSimulationTicks(missedTicks, catchUpState);
-                                        setAdSets(advanced.newAdSets); setHiredInfluencers(advanced.newInfluencers); setSalesData(advanced.newSalesData); setLiveTick(advanced.newTick);
-                                    }
-                                } catch(e) { console.error("Error parsing live state", e); }
+                            if (res.data.liveState) {
+                                setSheetLiquidCash(parseFloat(res.data.liveState.liquidCash) || 0);
                             }
                             setView("dashboard"); localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
                         } else { alert(res.message); localStorage.removeItem('student_creds'); }
-                    } else { 
-                        if (!/^(BSMT|MSMT|BMST)\d{5}$/i.test(form.rollNo)) return alert("Invalid Roll No.");
-                        if (!form.email.endsWith("@itu.edu.pk")) return alert("Email must end in @itu.edu.pk");
-                        await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams({action: "register", ...form}) });
-                        alert("Incorporated! Please Login."); setAuthTab(0); 
                     }
                 } catch (e) { alert("Connection Error."); }
                 setStatus("idle");
             };
 
-            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
+            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); setReportSubmitted(false); setReportText(""); }
+            
+            // Controlled word count tracker mechanics
+            const reportWordCount = reportText.trim() === "" ? 0 : reportText.trim().split(/\s+/).length;
+            const isWordCountInvalid = reportWordCount < 500 || reportWordCount > 800;
 
-            const orderCooldownActive = liveTick - lastOrderTick < 72;
-            const priceCooldownActive = liveTick - lastPriceTick < 72 && lastPriceTick !== -999;
-            const loanCooldownActive = liveTick - lastLoanTick < 168 && lastLoanTick !== -999;
-            const isBusinessReady = lockedPrice > 0;
-
-            const arrivedShipments = shipments.filter(sh => (liveTick - sh.orderedAtTick) >= (sh.method === 'Local' ? 0 : (sh.method === 'China_Air' ? 360 : 720)));
-            const totalStockReceived = (user ? parseInt(user.inventory) || 0 : 0) + arrivedShipments.reduce((sum, sh) => sum + sh.qty, 0);
-            const currentLiveInventory = Math.max(0, totalStockReceived - totalActualSales - (salesData.retained || 0));
-
-            const handleTakeLoan = () => {
-                if (!isLoanEnabled) return alert("Loan facility is currently disabled by the Instructor.");
-                if (loanCooldownActive) return alert("Loan facility is locked for 7 simulated days!");
-                if (loanAmount <= 0) return alert("Select an amount on the slider.");
-                if (!window.confirm(`Are you sure you want to take a loan of Rs ${loanAmount.toLocaleString()}? This adds to your total debt.`)) return;
-
-                const newTotalLoan = totalLoan + loanAmount;
-                const takenAmount = loanAmount;
-                setTotalLoan(newTotalLoan); setLastLoanTick(liveTick); setLoanAmount(0); 
-                alert(`Rs ${takenAmount.toLocaleString()} added to your Liquid Cash!`);
-                syncDataToServer({ totalLoan: newTotalLoan, lastLoanTick: liveTick });
-                
-                // LOG LOAN
-                let logPayload = { action: 'logLoan', companyId: user.companyId, rollNo: user.rollNo, loanAmount: takenAmount, tick: liveTick };
-                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(logPayload) });
-            };
-
-            const handleOrderInventory = () => {
-                if (orderCooldownActive) return alert("Inventory ordering is on cooldown for 3 simulated days!");
-                if (!m1.qty || parseInt(m1.qty) === 0) return alert("Please specify an order quantity.");
-
-                const calcPrimary = calculateShipmentCost(m1.method, parseInt(m1.qty));
-                let calcBridge = 0; let totalQty = parseInt(m1.qty);
-                if (m2.useBridge && parseInt(m2.bridgeQty) > 0) { calcBridge = calculateShipmentCost(m2.bridgeMethod, parseInt(m2.bridgeQty)); totalQty += parseInt(m2.bridgeQty); }
-                const actualUnitCost = (calcPrimary + calcBridge) / totalQty;
-                const enteredUnitCost = parseFloat(m1.trueU);
-
-                // DEVIATION PERCENTAGE FIX
-                if (!enteredUnitCost || Math.abs(actualUnitCost - enteredUnitCost) / actualUnitCost > 0.10) {
-                    const deviationPct = ((Math.abs(actualUnitCost - enteredUnitCost) / actualUnitCost) * 100).toFixed(1);
-                    alert(`MATH ERROR! Your entered True Landed Cost (Rs ${enteredUnitCost || 0}) deviates by ${deviationPct}%. \n\nPlease keep the deviation under 10% by fixing your Excel formulas before placing an order!`);
-                    return;
+            const handleReportSubmit = async () => {
+                if (isWordCountInvalid) {
+                    return alert("Submission blocked: Your report must be between 500 and 800 words.");
                 }
-                if (liveCashRemaining < (calcPrimary + calcBridge)) return alert("Insufficient Liquid Cash to place this order!");
 
-                const newShipments = [];
-                if (parseInt(m1.qty) > 0) newShipments.push({ id: Date.now(), method: m1.method, qty: parseInt(m1.qty), totalLandedCost: calcPrimary, orderedAtTick: liveTick });
-                if (m2.useBridge && parseInt(m2.bridgeQty) > 0) newShipments.push({ id: Date.now()+1, method: m2.bridgeMethod, qty: parseInt(m2.bridgeQty), totalLandedCost: calcBridge, orderedAtTick: liveTick });
-
-                const updatedShipments = [...shipments, ...newShipments];
-                setShipments(updatedShipments); setLastOrderTick(liveTick); setM1({...m1, qty: 0}); setM2({...m2, bridgeQty: 0}); 
-
-                let payload = { action: 'submitProcurement', companyId: user.companyId, rollNo: user.rollNo, method: m1.method, qty: m1.qty, bridgeMethod: m2.useBridge ? m2.bridgeMethod : '', bridgeQty: m2.useBridge ? m2.bridgeQty : 0, actualCost: actualUnitCost, enteredCost: enteredUnitCost };
-                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
-                alert("Inventory Ordered! Transit times will apply.");
+                if (!window.confirm("Are you sure you want to submit your final report? This cannot be undone.")) return;
                 
-                syncDataToServer({ shipments: updatedShipments, lastOrderTick: liveTick }); 
-            };
-
-            const submitMod6 = async () => {
-                if (m6.shipping.length < 20 || m6.returns.length < 20 || m6.privacy.length < 20 || m6.terms.length < 20) {
-                    return alert("Please draft comprehensive policies for all four sections.");
-                }
-                setStatus("busy");
-                
+                setStatus("saving-report");
                 let payload = {
-                    action: "submitMod6Capstone", 
-                    companyId: user.companyId, 
-                    rollNo: user.rollNo, 
-                    shipping: m6.shipping,
-                    returns: m6.returns,
-                    privacy: m6.privacy,
-                    terms: m6.terms
+                    action: "submitFinalReport",
+                    companyId: user.companyId,
+                    rollNo: user.rollNo,
+                    equity: Math.floor(sheetLiquidCash),
+                    report: reportText
                 };
-                
+
                 try {
-                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
-                    setUser({...user, hasSubmittedCurrentModule: true}); 
-                    alert("Policies Submitted. Awaiting Evaluation"); 
-                    setStatus("locked");
-                } catch(e) { alert("Connection Error."); setStatus("idle"); }
-            };
-
-            const submit = async () => {
-                if(liveCashRemaining < 0) return alert("Insufficient Liquid Cash!");
-                if(!m1.landed || !m1.trueU || !m1.price) return alert("Error: Complete calculations.");
-                if (user.module == 4 && stack.length === 0) return alert("Error: Build UI layout.");
-
-                setStatus("busy");
-                let payload = {
-                    action: "submitDecision", companyId: user.companyId, module: user.module, method: m1.method, courier: m1.courier, qty: m1.qty, bridgeMethod: (m2.useBridge) ? m2.bridgeMethod : "", bridgeQty: (m2.useBridge) ? m2.bridgeQty : 0,
-                    marketingBudget: m1.budget, gVal: m1.gVal, cif: m1.cif, duty: m1.duty, gstV: m1.gstV, gstP: m1.gstP, totalLanded: m1.landed, trueU: m1.trueU, price: m1.price, grossMargin: m1.gross, opMargin: m1.op, 
-                    loanTaken: user.module >= 5 ? totalLoan : loanAmount,
-                    recurringModel: user.module == 2 ? m2.recurringModel : (user.module == 3 ? `[UX: ${m3.checkoutUX} | Prepaid: ${m3.prepaidTarget}%] CCC: ${m3.cccStrategy}` : `[CRO CapEx: 0]`),
-                    trialStrategy: user.module == 2 ? m2.trialStrategy : (user.module == 3 ? m3.foggStrategy : JSON.stringify(stack.map(s=>s.id))),
-                    churnStrategy: user.module == 2 ? m2.churnStrategy : (user.module == 3 ? m3.asymmetryScript : `Logic: ${m4Strategy}`), subDiscount: user.module == 2 ? m2.subDiscount : 0
-                };
-                try {
-                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload)});
-                    setUser({...user, hasSubmittedCurrentModule: true}); alert(`Strategy Locked successfully!`); setStatus("locked");
-                } catch(e) { alert("Connection Error."); setStatus("idle"); }
-            };
-
-            if (view === "dashboard" && user) {
-                const localMultiplier = 1.0; 
-                const baseCost = m1.method === "Local" ? Math.floor(s.local * localMultiplier) : s.china;
-                const freightDisplay = m1.method === "Local" ? "Rs 150 / Unit" : (m1.method === "China_Air" ? "Rs 3,100 / KG" : "Rs 90,000 / CBM");
-                const actualCpa = Math.floor(s.cpa * (user.module >= 2 ? 1.5 : 1.0));
-                const insuranceDisplay = m1.method === "Local" ? "0%" : "1% of C&F Value";
-                
-                let projectedForecastDemand = 0;
-                if (user.module >= 5) {
-                    let uxFriction = m3.checkoutUX === "Account Required" ? 0.85 : (m3.checkoutUX === "OTP Mandatory" ? 0.65 : 1.0);
-                    projectedForecastDemand = Math.floor(((Math.floor(user.brand * 4.0)) + Math.floor((parseFloat(m1.budget) || 0) / actualCpa)) * uxFriction);
+                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload) });
+                    alert("Report submitted successfully!");
+                    setReportSubmitted(true);
+                    if (user) user.isFinalReportSubmitted = true;
+                } catch(e) {
+                    alert("Connection error processing transmission.");
                 }
+                setStatus("idle");
+            };
 
+            if (SIMULATION_CLOSED && view === "dashboard" && user) {
                 return (
                     <ThemeProvider theme={theme}><CssBaseline />
-                        <Container maxWidth="xl" sx={{ pt: 4, pb: 20 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                                <div>
-                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text"><Icon sx={{fontSize: 32, color: '#3b82f6'}}>dashboard</Icon> {user.companyName} <span style={{fontSize:'18px', color:'#94a3b8'}}>| Mod {user.module}</span></Typography>
-                                    <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
-                                </div>
-                                <Box display="flex" alignItems="center" gap={2}>
-                                    <Box display="flex" flexWrap="wrap" p={1.5} sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(0,0,0,0.1)'}}>
-                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2}}>
-                                            <Typography variant="caption" color="text.secondary" display="block">Base Equity</Typography>
-                                            <Typography variant="h6" className="mono" color="#1e293b" lineHeight={1}>Rs {startingEquity.toLocaleString()}</Typography>
-                                            <Typography variant="caption" className="mono" color="#475569">{user.brand} Brand Score</Typography>
-                                        </Box>
-                                        {user.module >= 5 && (
-                                            <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2, pl: 2}}>
-                                                <Typography variant="caption" color="error.main" display="block">Procurement Exp.</Typography>
-                                                <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(estProcurement).toLocaleString()}</Typography>
-                                            </Box>
-                                        )}
-                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2, pl: 2}}>
-                                            <Typography variant="caption" color="error.main" display="block">Marketing Exp.</Typography>
-                                            <Typography variant="h6" className="mono" color="error.main" lineHeight={1}>- Rs {Math.floor(totalMarketingExpenditure).toLocaleString()}</Typography>
-                                        </Box>
-                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2, pl: 2}}>
-                                            <Typography variant="caption" color="primary" display="block">Gross Revenue</Typography>
-                                            <Typography variant="h6" className="mono" color="primary" lineHeight={1}>+ Rs {Math.floor(salesData.grossRev).toLocaleString()}</Typography>
-                                        </Box>
-                                        <Box textAlign="left" sx={{borderRight: '1px solid rgba(0,0,0,0.1)', pr: 2, pl: 2}}>
-                                            <Typography variant="caption" color="#f59e0b" display="block">Transit Holdback</Typography>
-                                            <Typography variant="h6" className="mono" color="#f59e0b" lineHeight={1}>- Rs {Math.floor(projectedLockedCash).toLocaleString()}</Typography>
-                                        </Box>
-                                        <Box textAlign="left" sx={{borderLeft: '2px solid #10b981', pl: 2}}>
-                                            <Typography variant="caption" color={liveCashRemaining >= 0 ? "#10b981" : "error.main"} fontWeight="bold" display="block">Net Liquid Cash</Typography>
-                                            <Typography variant="h5" className="mono" color={liveCashRemaining >= 0 ? "#10b981" : "error.main"} lineHeight={1}>Rs {Math.floor(liveCashRemaining).toLocaleString()}</Typography>
-                                        </Box>
-                                    </Box>
-                                    {user.module >= 5 ? (
-                                        <Box display="flex" flexDirection="column" gap={1}>
-                                            <Button variant="contained" onClick={() => {syncDataToServer(); alert("Progress Synced to Cloud!");}} sx={{background: '#10b981', '&:hover': {background: '#059669'}, height: 'fit-content'}}>Save Cloud</Button>
-                                        </Box>
-                                    ) : (<Button variant="contained" color="error" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{height: 'fit-content'}}>Logout</Button>)}
-                                    <Button variant="outlined" color="error" size="small" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{height: 'fit-content'}}>Logout</Button>
-                                </Box>
+                        <Container maxWidth={false} sx={{ pt: 4, pb: 10, px: {xs: 2, sm: 4, md: 8} }}>
+                            
+                            {/* SOLID RED CONDITIONAL HEADER BANNER LOGIC ENGINE */}
+                            <Box sx={{mb: 4, borderRadius: 3, background: '#dc2626', color: 'white', p: 3, boxShadow: '0 4px 15px rgba(220, 38, 38, 0.2)'}}>
+                                <Typography variant="h6" fontWeight="bold" sx={{display: 'flex', alignItems: 'center', gap: 1}}><Icon>error</Icon>Project Submissions Closed</Typography>
+                                <Typography variant="body2" sx={{mt: 0.5}}>
+                                    {user.module === 6 && (
+                                        <span>Submissions are closed now. All trading has halted. Your final brand scores will be posted once the pending modules are evaluated. Click on the <b>Submit Final Report</b> tab to submit your final report by Saturday, <b>23rd May 2026</b>.</span>
+                                    )}
+                                    {user.module < 6 && user.module > 1 && (
+                                        <span>Submissions are closed now. You project is incomplete and your brand score will be penalised accordingly</span>
+                                    )}
+                                    {user.module === 1 && (
+                                        <span>Submissions are closed now. You did not attempt the project and scored zero marks</span>
+                                    )}
+                                </Typography>
                             </Box>
 
-                            {/* MODULE 1-4 LOAN */}
-                            {user.module <= 4 && !user.hasSubmittedCurrentModule && (
-                                <Box sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(245, 158, 11, 0.3)', p: 2, mb: 3}}>
-                                    <Grid container spacing={3} alignItems="center">
-                                        <Grid item xs={12} md={3}><Typography variant="body2" fontWeight="bold" color="#d97706" className="icon-text"><Icon sx={{fontSize: 20}}>account_balance</Icon> Debt Facility (30% Int)</Typography></Grid>
-                                        <Grid item xs={12} md={6}><Slider value={loanAmount} min={0} max={10000000} step={100000} onChange={(e,v) => setLoanAmount(v > 0 && v < 1000000 ? 1000000 : v)} sx={{color: '#f59e0b'}} marks={[{value: 0, label: 'No Loan'}, {value: 1000000, label: '1M'}, {value: 10000000, label: 'Max 10M'}]} /></Grid>
-                                        <Grid item xs={12} md={3} textAlign="right"><Typography variant="h5" className="mono" color="#d97706">+ Rs {loanAmount.toLocaleString()}</Typography></Grid>
-                                    </Grid>
-                                </Box>
-                            )}
-                            
-                            {/* MODULE 5 LOAN WITH ADMIN TOGGLE AND 7 DAY LOCK */}
-                            {user.module >= 5 && (
-                                <Box sx={{background: 'rgba(255,255,255,0.7)', borderRadius: 2, border: '1px solid rgba(245, 158, 11, 0.3)', p: 2, mb: 3}}>
-                                    <Grid container spacing={3} alignItems="center">
-                                        <Grid item xs={12} md={3}>
-                                            <Typography variant="body2" fontWeight="bold" color={isLoanEnabled ? "#d97706" : "error"} className="icon-text">
-                                                <Icon sx={{fontSize: 20}}>{isLoanEnabled ? 'account_balance' : 'block'}</Icon> Debt Facility (30% Int)
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} md={5}>
-                                            <Slider disabled={!isLoanEnabled || loanCooldownActive} value={loanAmount} min={0} max={10000000} step={100000} onChange={(e,v) => setLoanAmount(v)} sx={{color: isLoanEnabled ? '#f59e0b' : 'gray'}} marks={[{value: 0, label: '0'}, {value: 10000000, label: 'Max 10M'}]} />
-                                        </Grid>
-                                        <Grid item xs={12} md={4} textAlign="right" display="flex" alignItems="center" justifyContent="flex-end" gap={2}>
-                                            <Typography variant="h6" className="mono" color={isLoanEnabled ? "#d97706" : "gray"}>Rs {loanAmount.toLocaleString()}</Typography>
-                                            <Button variant="contained" disabled={!isLoanEnabled || loanCooldownActive || loanAmount === 0} onClick={handleTakeLoan} sx={{background: '#f59e0b', '&:hover': {background: '#d97706'}}}>
-                                                {!isLoanEnabled ? "Suspended" : loanCooldownActive ? `Locked (${Math.max(0, 168 - (liveTick - lastLoanTick))}h)` : "Take Loan"}
-                                            </Button>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            )}
+                            {/* HEADER INFRASTRUCTURE */}
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                                <div>
+                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text">
+                                        <Icon sx={{fontSize: 32, color: '#3b82f6'}}>verified_user</Icon> {user.companyName}
+                                    </Typography>
+                                    <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
+                                </div>
+                                <Button variant="outlined" color="error" onClick={logout} startIcon={<Icon>logout</Icon>}>Logout</Button>
+                            </Box>
 
-                            {/* GLOBAL PENALTY ALERT */}
-                            {adminPenalties > 0 && (
-                                <Alert severity="error" sx={{mb: 3, border: '1px solid red'}}>
-                                    <AlertTitle>Administrative Debt Assigned</AlertTitle>
-                                    Your Liquid Cash has been penalized by <strong>Rs {adminPenalties.toLocaleString()}</strong>. Check your Inbox for details.
-                                </Alert>
-                            )}
-
-                            <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)} variant="scrollable" scrollButtons="auto" sx={{mb:3}}>
-                                <Tab icon={<Icon sx={{fontSize: 20}}>inventory</Icon>} iconPosition="start" label="Procurement" />
-                                {user.module >= 5 && <Tab icon={<Icon sx={{fontSize: 20}}>campaign</Icon>} iconPosition="start" label="Meta Ads" />}
-                                {user.module >= 5 && <Tab icon={<Icon sx={{fontSize: 20}}>groups</Icon>} iconPosition="start" label="Influencer PR" />}
-                                {user.module >= 6 && <Tab icon={<Icon sx={{fontSize: 20}}>gavel</Icon>} iconPosition="start" label="Module 6" />}
-                                <Tab icon={<Icon sx={{fontSize: 20}}>inbox</Icon>} iconPosition="start" label={user?.notifications?.length > 0 ? `Inbox (${user.notifications.length})` : "Inbox"} />
-                                <Tab icon={<Icon sx={{fontSize: 20}}>insights</Icon>} iconPosition="start" label="Historical Performance" />
-                            </Tabs>
-
-                            {user.hasSubmittedCurrentModule && user.module < 5 && (
-                                <div className="m3-card" style={{textAlign: 'center', padding: '80px 20px', border: '2px dashed rgba(59, 130, 246, 0.5)'}}><Icon sx={{fontSize: 80, color: '#3b82f6', mb: 2}}>hourglass_empty</Icon><Typography variant="h4" fontWeight="bold" color="#1e293b" mb={2}>Decision Locked</Typography><Box display="flex" gap={2} justifyContent="center mt-4"><Button variant="contained" size="large" onClick={() => setNavTab(user.module >= 5 ? 3 : 1)} startIcon={<Icon>insights</Icon>} sx={{borderRadius: '50px', px: 4, py: 1.5}}>Review Past Results</Button></Box></div>
-                            )}
-
-                            {/* --- TAB 0: PROCUREMENT --- */}
-                            {navTab === 0 && (user.module >= 5 || !user.hasSubmittedCurrentModule) && (
-                                <Grid container spacing={4}>
-                                    <Grid item xs={12} md={4}>
-                                        <Box className="sidebar">
-                                            <div className="m3-card">
-    <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>inventory_2</Icon> DYNAMIC DOSSIER: {user.niche}</Typography>
-    <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2">Unit Cost (FOB)</Typography><Typography className="mono">Rs {baseCost}</Typography></div>
-    <div className="data-row"><Typography variant="body2">Weight / Volume</Typography><Typography className="mono">{s.kg}KG / {s.cbm}CBM</Typography></div>
-    <div className="data-row"><Typography variant="body2" fontWeight="bold">Active Freight Rate</Typography><Typography className="mono" fontWeight="bold">{freightDisplay}</Typography></div>
-    
-    {/* --- THE MISSING IMPORT/LOGISTICS ROWS --- */}
-    <div className="data-row"><Typography variant="body2">Insurance Cost</Typography><Typography className="mono">{insuranceDisplay}</Typography></div>
-    <div className="data-row"><Typography variant="body2">Import Duty / GST Rate</Typography><Typography className="mono">{m1.method === "Local" ? "0%" : `${s.duty}%`} / 18%</Typography></div>
-    <div className="data-row"><Typography variant="body2">Agent / Misc Fees</Typography><Typography className="mono">{m1.method === "Local" ? "Rs 0" : "Rs 22,800"}</Typography></div>
-
-    <Divider sx={{my:2}}/>
-    <Typography variant="overline" color="primary" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>local_shipping</Icon> FULFILLMENT: {m1.courier}</Typography>
-    <div className="data-row" style={{marginTop: '10px'}}><Typography variant="body2" color="secondary" fontWeight="bold">Baseline Niche CAC</Typography><Typography className="mono" fontWeight="bold">Rs {actualCpa}</Typography></div>
-    <div className="data-row"><Typography variant="body2">Courier Delivery Cost</Typography><Typography className="mono">Rs {c.ship}</Typography></div>
-    
-    {/* --- THE MISSING PACKAGING & GATEWAY ROW --- */}
-    <div className="data-row"><Typography variant="body2">Pack & Gateway Fee</Typography><Typography className="mono">Rs {s.pack} / 2.5%</Typography></div>
-
-    <div className="data-row"><Typography variant="body2" color="error.main">Est. COD RTO Penalty</Typography><Typography className="mono" color="error.main">{(c.rtoRate * 100).toFixed(0)}% / Rs {c.rtoPen}</Typography></div>
-    <div className="data-row" style={{background: 'rgba(245, 158, 11, 0.1)', padding: '4px'}}><Typography variant="body2" color="#d97706" fontWeight="bold">COD Cash Holdback</Typography><Typography className="mono" color="#d97706" fontWeight="bold">{(c.holdback * 100).toFixed(0)}% Locked</Typography></div>
-</div>
-
-                                            <div className="m3-card relative">
-                                                {orderCooldownActive && user.module === 5 && (
-                                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-[24px] p-6 text-center border-2 border-red-500">
-                                                        <Icon sx={{fontSize: 48, color: '#ef4444', mb: 1}}>timer</Icon>
-                                                        <Typography variant="h6" fontWeight="bold" color="error">Order Cooldown</Typography>
-                                                        <Typography variant="body2">You recently placed an order. You must wait 3 simulated days before ordering again.</Typography>
-                                                        <Typography variant="caption" color="text.secondary" mt={2} className="mono">Unlocks in approx: {Math.max(0, 72 - (liveTick - lastOrderTick))} Sim. Hours</Typography>
-                                                    </div>
-                                                )}
-                                                
-                                                <Typography variant="h6" mb={3} className="icon-text"><Icon color="primary">settings</Icon> 1. Inventory Sourcing</Typography>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={12}><TextField select fullWidth size="small" label="Sourcing Method" value={m1.method} onChange={e=>setM1({...m1, method: e.target.value})}><MenuItem value="Local">Local</MenuItem><MenuItem value="China_Air">China Air (15 Days)</MenuItem><MenuItem value="China_Sea">China Sea (30 Days)</MenuItem></TextField></Grid>
-                                                    <Grid item xs={12}><Typography variant="caption" color="text.secondary">Order Quantity</Typography><Stack direction="row" spacing={2} alignItems="center"><Slider disabled={orderCooldownActive} value={Number(m1.qty)||0} min={0} max={5000} onChange={(e,v)=>setM1({...m1, qty: v})} /><TextField disabled={orderCooldownActive} type="text" size="small" value={m1.qty} onChange={e=>setM1({...m1, qty: cleanNum(e.target.value)})} sx={{width: '90px'}} /></Stack></Grid>
-                                                    <Grid item xs={12}>
-                                                        <FormControlLabel control={<Switch disabled={orderCooldownActive} checked={m2.useBridge} onChange={e=>setM2({...m2, useBridge: e.target.checked})}/>} label={<Typography variant="body2">Simultaneous Sourcing</Typography>} />
-                                                        {m2.useBridge && (
-                                                            <Box sx={{p: 2, background: 'rgba(59,130,246,0.1)', borderRadius: 2, mt: 1}}>
-                                                                <TextField select fullWidth size="small" label="Bridge Method" value={m2.bridgeMethod} onChange={e=>setM2({...m2, bridgeMethod: e.target.value})}><MenuItem value="Local">Local</MenuItem><MenuItem value="China_Air">China Air</MenuItem></TextField>
-                                                                <Stack direction="row" spacing={2} alignItems="center" mt={2}><Slider disabled={orderCooldownActive} value={Number(m2.bridgeQty)||0} min={0} max={1000} onChange={(e,v)=>setM2({...m2, bridgeQty: v})} /><TextField disabled={orderCooldownActive} type="text" size="small" value={m2.bridgeQty} onChange={e=>setM2({...m2, bridgeQty: cleanNum(e.target.value)})} sx={{width: '80px'}} /></Stack>
-                                                            </Box>
-                                                        )}
-                                                    </Grid>
-                                                    <Grid item xs={12}><TextField select fullWidth size="small" label="Courier Partner" value={m1.courier} onChange={e=>setM1({...m1, courier: e.target.value})}>{Object.keys(COURIERS).map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</TextField></Grid>
-                                                    
-                                                    {user.module >= 5 ? (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="caption" color="primary" fontWeight="bold">Est. 30-Day Ad Spend</Typography>
-                                                            <Stack direction="row" spacing={2} alignItems="center"><Slider value={Number(m1.budget)||0} min={0} max={liveCashRemaining > 0 ? liveCashRemaining : 1000000} step={10000} onChange={(e,v)=>setM1({...m1, budget: v})} /><TextField type="text" size="small" value={m1.budget} onChange={e=>setM1({...m1, budget: cleanNum(e.target.value)})} sx={{width: '90px'}} /></Stack>
-                                                            <Box sx={{background: '#eff6ff', p: 2, borderRadius: 2, mt: 2, border: '1px solid #bfdbfe'}}><Typography variant="caption" color="text.secondary" display="block">Projected Demand:</Typography><Typography variant="h6" color="primary" className="mono">{projectedForecastDemand.toLocaleString()} Units</Typography><Typography variant="caption" sx={{color: '#64748b', fontSize: '10px', lineHeight: 1.2}}>Order enough inventory to cover this forecast.</Typography></Box>
-                                                        </Grid>
-                                                    ) : (
-                                                        <Grid item xs={12}><Typography variant="caption" color="text.secondary">Marketing Budget</Typography><Stack direction="row" spacing={2} alignItems="center"><Slider value={Number(m1.budget)||0} min={0} max={liveCashRemaining > 0 ? liveCashRemaining : 100000} onChange={(e,v)=>setM1({...m1, budget: v})} /><TextField type="text" size="small" value={m1.budget} onChange={e=>setM1({...m1, budget: cleanNum(e.target.value)})} sx={{width: '90px'}} /></Stack></Grid>
-                                                    )}
-                                                </Grid>
-                                            </div>
-                                            <div className="m3-card">
-                                                <Typography variant="h6" mb={3} className="icon-text"><Icon color="primary">price_change</Icon> 2. Pricing Strategy</Typography>
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="caption" color="text.secondary">Retail Price (PKR)</Typography>
-                                                        <Stack direction="row" spacing={2} alignItems="center"><Slider disabled={priceCooldownActive} value={Number(m1.price)||0} min={0} max={s.opt * 3} onChange={(e,v)=>setM1({...m1, price: v})} /><TextField disabled={priceCooldownActive} type="text" size="small" value={m1.price} onChange={e=>setM1({...m1, price: cleanNum(e.target.value)})} sx={{width: '90px'}} /></Stack>
-                                                        {user.module >= 5 && <Typography variant="caption" sx={{color: '#f59e0b', mt: 1, display: 'block', lineHeight: 1.2}}>Prices are elastic! Remember the 3x Landed Cost rule.</Typography>}
-                                                        {user.module >= 5 && (
-                                                            <Button variant="contained" disabled={priceCooldownActive} onClick={() => {
-                                                                if (m1.price <= 0) return alert("Price must be greater than 0.");
-                                                                setLockedPrice(parseFloat(m1.price)); setLastPriceTick(liveTick);
-                                                                alert("Price Locked for 3 Simulated Days.");
-                                                                syncDataToServer({ lockedPrice: parseFloat(m1.price), lastPriceTick: liveTick });
-                                                                
-                                                                // LOG PRICE
-                                                                let logPayload = { action: 'logPrice', companyId: user.companyId, rollNo: user.rollNo, price: m1.price, tick: liveTick };
-                                                                fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(logPayload) });
-                                                            }} sx={{mt: 2, background: '#f59e0b', '&:hover': {background: '#d97706'}}} size="small">
-                                                                {priceCooldownActive ? `Price Locked at Rs ${lockedPrice} (${Math.max(0, 72 - (liveTick - lastPriceTick))} hrs left)` : "Lock Price (3 Days)"}
-                                                            </Button>
-                                                        )}
-                                                    </Grid>
-                                                </Grid>
-                                            </div>
+                            {/* FULLROW METRIC BRAND BADGE CONTAINER */}
+                            <Grid container spacing={3} mb={5}>
+                                <Grid item xs={12}>
+                                    <Box sx={{background: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)', p: 4, borderRadius: 4, color: 'white', boxShadow: '0 10px 25px rgba(109, 40, 217, 0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box sx={{position: 'absolute', right: -20, top: -20, opacity: 0.12, color: 'white'}}><Icon sx={{fontSize: 160}}>workspace_premium</Icon></Box>
+                                        <Box>
+                                            <Typography variant="overline" sx={{color: '#ddd6fe', letterSpacing: '2px', fontWeight: 'bold'}} className="icon-text"><Icon sx={{color: '#c084fc'}}>stars</Icon> Current Brand Score Baseline</Typography>
+                                            <Typography variant="body2" sx={{color: '#f3e8ff', mt: 1, maxWidth: '500px'}}>Official calculated score performance standing at the conclusion of active modules.</Typography>
                                         </Box>
-                                    </Grid>
-                                    
-                                    <Grid item xs={12} md={8}>
-                                        <div className="m3-card">
-                                            <Typography variant="h6" mb={2} fontSize="1rem" className="icon-text"><Icon color="primary">calculate</Icon> 3. Procure-to-Pay Accounting</Typography>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="Total Goods" value={m1.gVal} onChange={e=>setM1({...m1, gVal: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="CIF Value" value={m1.cif} onChange={e=>setM1({...m1, cif: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="Duty Paid" value={m1.duty} onChange={e=>setM1({...m1, duty: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="Val for GST" value={m1.gstV} onChange={e=>setM1({...m1, gstV: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="GST Paid" value={m1.gstP} onChange={e=>setM1({...m1, gstP: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="TOTAL LANDED" value={m1.landed} onChange={e=>setM1({...m1, landed: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={12}><TextField fullWidth size="small" label="TRUE LANDED (Per Unit)" value={m1.trueU} onChange={e=>setM1({...m1, trueU: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="Gross Margin %" value={m1.gross} onChange={e=>setM1({...m1, gross: cleanNum(e.target.value)})} /></Grid>
-                                                <Grid item xs={6}><TextField fullWidth size="small" label="Op Margin %" value={m1.op} onChange={e=>setM1({...m1, op: cleanNum(e.target.value)})} /></Grid>
-                                            </Grid>
-                                        </div>
-
-                                        {user.module == 5 && (
-                                            <div className="m3-card" style={{border: '1px solid #8b5cf6', background: 'rgba(139, 92, 246, 0.05)'}}>
-                                                <Typography variant="overline" color="#8b5cf6" fontWeight="bold" className="icon-text"><Icon sx={{fontSize: 18}}>campaign</Icon> CONTINUOUS LIVE SANDBOX</Typography>
-                                                <Typography variant="body2" sx={{mt: 1}}>
-                                                    Your marketing budget and strategy are now fully controlled via the <b>Meta Ads</b> and <b>Influencer PR</b> tabs. 
-                                                    Enter your estimated ad budget here to see your 30-day forecast, order your inventory, and lock your price. The portal auto-saves your progress continuously.
-                                                </Typography>
-                                            </div>
-                                        )}
-                                    </Grid>
+                                        <Typography variant="h1" className="mono" sx={{fontWeight: 800, textShadow: '0 4px 12px rgba(0,0,0,0.25)', pr: 2}}>{user.brand}</Typography>
+                                    </Box>
                                 </Grid>
-                            )}
+                            </Grid>
 
-                            {/* --- TAB 1: META ADS MANAGER --- */}
-                            {navTab === 1 && user.module >= 5 && (
-                                <Grid container spacing={4}>
-                                    <Grid item xs={12} sx={{position: 'relative'}}>
-                                        {!isBusinessReady && (
-                                            <div className="absolute inset-0 bg-white/70 backdrop-blur-md z-50 flex flex-col items-center justify-center rounded-[24px] p-6 text-center border-4 border-purple-300">
-                                                <Icon sx={{fontSize: 64, color: '#a855f7', mb: 2}}>lock</Icon>
-                                                <Typography variant="h5" fontWeight="bold" color="#581c87">Pricing Required</Typography>
-                                                <Typography variant="body1" mt={1}>You must explicitly lock your Retail Price in the Procurement tab before accessing Marketing.</Typography>
-                                            </div>
-                                        )}
-                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} p={2} sx={{background: '#0f172a', borderRadius: 2, color: 'white'}}>
-                                            <div>
-                                                <Typography variant="h6" className="icon-text"><Icon sx={{color: '#a855f7'}}>hub</Icon> Meta Ads Engine</Typography>
-                                                <Typography variant="caption" color="#94a3b8">Ads subtract directly from Cash. If Liquid Cash hits Rs 0, ads will pause.</Typography>
-                                            </div>
-                                            <div className="flex gap-4 items-center">
-                                                <div className="stock-indicator"><div className={`stock-pulse ${currentLiveInventory <= 100 ? (currentLiveInventory <= 0 ? 'danger' : 'warning') : ''}`}></div> Live Inventory: {currentLiveInventory.toLocaleString()}</div>
-                                                <div className="bg-slate-800 px-4 py-2 rounded text-sm font-medium border border-slate-700 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>Sim. Time: Day {Math.floor(liveTick / 24) + 1} ({liveTick % 24}:00)</div>
-                                                {metaView === 'dashboard' && (<Button variant="contained" onClick={() => setMetaView('create_campaign')} sx={{background: '#8b5cf6', '&:hover': {background: '#7c3aed'}}}>+ Create Campaign</Button>)}
-                                            </div>
-                                        </Box>
-                                        {metaView === 'dashboard' && <AdsDashboard campaigns={campaigns} adSets={adSets} ads={ads} setMetaView={setMetaView} setActiveCampaignId={setActiveCampaignId} setActiveAdSetId={setActiveAdSetId} setActiveAdId={setActiveAdId} setCampaigns={setCampaigns} setAdSets={setAdSets} setAds={setAds} />}
-                                        {(metaView === 'create_campaign' || metaView === 'edit_campaign') && <CreateCampaign metaView={metaView} activeCampaignId={activeCampaignId} campaigns={campaigns} setCampaigns={setCampaigns} setMetaView={setMetaView} setActiveCampaignId={setActiveCampaignId} />}
-                                        {(metaView === 'create_adset' || metaView === 'edit_adset') && <CreateAdSet metaView={metaView} activeAdSetId={activeAdSetId} activeCampaignId={activeCampaignId} adSets={adSets} campaigns={campaigns} setAdSets={setAdSets} setMetaView={setMetaView} setActiveAdSetId={setActiveAdSetId} />}
-                                        {(metaView === 'create_ad' || metaView === 'edit_ad') && <CreateAd metaView={metaView} activeAdId={activeAdId} activeAdSetId={activeAdSetId} ads={ads} adSets={adSets} setAds={setAds} setMetaView={setMetaView} />}
-                                    </Grid>
-                                </Grid>
-                            )}
-
-                            {/* --- TAB 2: INFLUENCER PR MANAGER --- */}
-                            {navTab === 2 && user.module >= 5 && (
-                                <Grid container spacing={4}>
-                                    <Grid item xs={12} sx={{position: 'relative'}}>
-                                        {!isBusinessReady && (
-                                            <div className="absolute inset-0 bg-white/70 backdrop-blur-md z-50 flex flex-col items-center justify-center rounded-[24px] p-6 text-center border-4 border-pink-300">
-                                                <Icon sx={{fontSize: 64, color: '#ec4899', mb: 2}}>lock</Icon>
-                                                <Typography variant="h5" fontWeight="bold" color="#831843">Pricing Required</Typography>
-                                                <Typography variant="body1" mt={1}>You must explicitly lock your Retail Price in the Procurement tab before accessing Marketing.</Typography>
-                                            </div>
-                                        )}
-                                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} p={2} sx={{background: '#0f172a', borderRadius: 2, color: 'white'}}>
-                                            <div><Typography variant="h6" className="icon-text"><Icon sx={{color: '#ec4899'}}>groups</Icon> Influencer Operations</Typography><Typography variant="caption" color="#94a3b8">Active influencers drive demand instantly.</Typography></div>
-                                            <div className="flex gap-4 items-center">
-                                                <div className="stock-indicator"><div className={`stock-pulse ${currentLiveInventory <= 100 ? (currentLiveInventory <= 0 ? 'danger' : 'warning') : ''}`}></div> Live Inventory: {currentLiveInventory.toLocaleString()}</div>
-                                                <div className="bg-slate-800 px-4 py-2 rounded text-sm font-medium border border-slate-700 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>Sim. Time: Day {Math.floor(liveTick / 24) + 1} ({liveTick % 24}:00)</div>
-                                            </div>
-                                        </Box>
-                                        <InfluencerDashboard hiredInfluencers={hiredInfluencers} setHiredInfluencers={setHiredInfluencers} getInfluencerCost={getInfluencerCost} liveCashRemaining={liveCashRemaining} />
-                                    </Grid>
-                                </Grid>
-                            )}
-
-                            {/* --- TAB 3: CAPSTONE EVALUATION (MOD 6) --- */}
-                            {navTab === 3 && user.module >= 6 && (
-                                (user.hasSubmittedCurrentModule || user.serverTime > new Date("2026-05-17T23:59:59+05:00").getTime()) ? (
-                                    <div className="max-w-4xl mx-auto bg-white p-12 rounded shadow-lg border-t-4 border-blue-600 mb-8 text-center">
-                                        <Icon sx={{fontSize: 64, color: '#2563eb', mb: 2}}>lock</Icon>
-                                        <Typography variant="h4" fontWeight="bold" color="#1e293b">Decision Locked</Typography>
-                                        <Typography variant="h6" color="#475569" mt={2}>
-                                            {user.hasSubmittedCurrentModule ? "Your corporate policies have been successfully submitted and are awaiting Evaluation." : "The submission deadline (May 17, 2026, 11:59 PM PKT) has passed."}
-                                        </Typography>
-                                    </div>
-                                ) : (
-                                    <div className="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg border-t-4 border-blue-600 animate-fade-in mb-8">
-                                        <Typography variant="h5" fontWeight="bold" mb={1} className="icon-text"><Icon sx={{color: '#2563eb'}}>gavel</Icon> Final Evaluation: Corporate Policy</Typography>
-                                        
-                                        <div className="bg-blue-50 p-5 rounded-lg border border-blue-200 mb-6 mt-4">
-                                            <Typography variant="subtitle2" fontWeight="bold" color="primary">The Scenario:</Typography>
-                                            <Typography variant="body2" color="text.secondary" mt={1}>
-                                                Your business is experiencing steady growth; however, your formal business policies remain largely underdeveloped. To date, operations have been sustained through effective customer management. As your customer base continues to expand, it is now critical to establish comprehensive and well-defined policies for your e-commerce operations. Doing so will help preserve customer trust, mitigate the risk of losing customers, and safeguard your business from potential legal challenges.
-    You are therefore required to develop clear and coherent policies, including a Shipping Policy, Return & Refund Policy, Privacy Policy, and General Terms & Conditions, using the fields provided below. You may follow the structure and guidelines discussed during the class. The deadline for submission is Sunday, 17th May 2026. 
-                                            </Typography>
-                                        </div>
-
-                                        <div className="space-y-6 mb-8">
-                                            <div className="bg-gray-50 p-6 rounded border">
-                                                <label className="block text-sm font-bold mb-2 text-gray-700">1. Shipping Policy</label>
-                                                <textarea value={m6.shipping} onChange={(e) => setM6({...m6, shipping: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
-                                            </div>
-                                            <div className="bg-gray-50 p-6 rounded border">
-                                                <label className="block text-sm font-bold mb-2 text-gray-700">2. Return & Refund Policy</label>
-                                                <textarea value={m6.returns} onChange={(e) => setM6({...m6, returns: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
-                                            </div>
-                                            <div className="bg-gray-50 p-6 rounded border">
-                                                <label className="block text-sm font-bold mb-2 text-gray-700">3. Privacy Policy</label>
-                                                <textarea value={m6.privacy} onChange={(e) => setM6({...m6, privacy: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
-                                            </div>
-                                            <div className="bg-gray-50 p-6 rounded border">
-                                                <label className="block text-sm font-bold mb-2 text-gray-700">4. General Terms & Conditions</label>
-                                                <textarea value={m6.terms} onChange={(e) => setM6({...m6, terms: e.target.value})} className="w-full p-3 border border-gray-300 rounded outline-none bg-white" rows="4" placeholder="Draft your policy here..." />
-                                            </div>
-                                        </div>
-                                        <Button variant="contained" size="large" fullWidth onClick={submitMod6} disabled={status === "busy"} sx={{py: 2, background: '#2563eb', fontWeight: 'bold'}}>Submit Final Corporate Policies</Button>
-                                    </div>
-                                )
-                            )}
-
-                            {/* --- TAB 4: INBOX --- */}
-                            {navTab === (user.module >= 6 ? 4 : 3) && user.module >= 5 && (
-                                <div className="m3-card max-w-4xl mx-auto">
-                                    <Typography variant="h5" fontWeight="bold" mb={4} className="icon-text"><Icon sx={{color: '#3b82f6'}}>inbox</Icon> Official Communications</Typography>
-                                    
-                                    {user.notifications && user.notifications.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {user.notifications.map((notif, idx) => (
-                                                <div key={idx} className="bg-white p-5 rounded-xl border-l-4 border-blue-500 shadow-sm">
-                                                    <Typography variant="caption" color="text.secondary" fontWeight="bold">{new Date(notif.date).toLocaleString()}</Typography>
-                                                    <Typography variant="h6" color="#1e293b" mt={1}>{notif.title}</Typography>
-                                                    <Typography variant="body1" color="#475569" mt={1}>{notif.message}</Typography>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center p-10 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                                            <Typography color="text.secondary">Your inbox is empty.</Typography>
-                                        </div>
+                            {/* PORTAL NAVIGATION LINKS */}
+                            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                                <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)}>
+                                    <Tab label="Historical Decision Log" icon={<Icon>list_alt</Icon>} iconPosition="start" />
+                                    {user.module === 6 && (
+                                        <Tab label="Submit Final Report" icon={<Icon>rate_review</Icon>} iconPosition="start" />
                                     )}
+                                </Tabs>
+                            </Box>
+
+                            {/* TAB 0: HISTORICAL LOGS TABLE VIEW WITH WORD WRAPPING ACTIVE */}
+                            {navTab === 0 && (
+                                <div className="m3-card">
+                                    <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">list_alt</Icon> Complete Decisions Log (Your Inputs)</Typography>
+                                    <TableContainer component={Paper} elevation={0} sx={{border: '1px solid #e2e8f0', maxHeight: '600px', overflowX: 'auto'}}>
+                                        <Table stickyHeader size="small" sx={{whiteSpace: 'normal'}}>
+                                            <TableHead>
+                                                <TableRow>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Decision ID</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Company ID</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Module</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Method</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Courier</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Qty Ordered</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Marketing Budget</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Gross %</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Op %</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Goods Value</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CIF Value</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Duty Paid</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Value for GST</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total GST Paid</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Landed Cost</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>True Unit Cost</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Selling Price</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Status</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Recurring Model</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Trial Strategy</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Churn Strategy</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Sub Discount</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Effective Available Qty</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CAC Mod</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Brand Mod</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>RTO Mod</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Method</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Qty</TableCell>
+                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Loan Taken</TableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {user.decisions && user.decisions.map((d, idx) => (
+                                                    <TableRow key={idx} hover>
+                                                        <TableCell sx={{color: '#64748b'}}>{d[0]}</TableCell>
+                                                        <TableCell>{d[1]}</TableCell>
+                                                        <TableCell sx={{fontWeight: 'bold'}}>Mod {d[2]}</TableCell>
+                                                        <TableCell>{d[3]}</TableCell>
+                                                        <TableCell>{d[4]}</TableCell>
+                                                        <TableCell className="mono">{d[5]}</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[6] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono">{d[7]}%</TableCell>
+                                                        <TableCell className="mono">{d[8]}%</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[9] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[10] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[11] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[12] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono">Rs {Number(d[13] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono" sx={{color: '#ef4444', fontWeight: 'bold'}}>Rs {Number(d[14] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono" sx={{color: '#f59e0b', fontWeight: 'bold'}}>Rs {Number(d[15] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell className="mono" sx={{color: '#10b981', fontWeight: 'bold'}}>Rs {Number(d[16] || 0).toLocaleString()}</TableCell>
+                                                        <TableCell><Chip label={d[17]} size="small" sx={{fontSize: '11px'}} /></TableCell>
+                                                        <TableCell>{d[18] || 'N/A'}</TableCell>
+                                                        <TableCell>{d[19] || 'N/A'}</TableCell>
+                                                        <TableCell>{d[20] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[21] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[22] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[23] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[24] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[25] || 'N/A'}</TableCell>
+                                                        <TableCell>{d[26] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono">{d[27] || 'N/A'}</TableCell>
+                                                        <TableCell className="mono" sx={{color: '#d97706'}}>Rs {Number(d[28] || 0).toLocaleString()}</TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
                                 </div>
                             )}
 
-                            {/* FLOATING BOTTOM FORECAST BAR */}
-                            {navTab === 0 && (user.module >= 5 || !user.hasSubmittedCurrentModule) && (
-                                <Box className={`bottom-bar ${minimized ? 'minimized' : ''}`}>
-                                    <div className="toggle-btn" onClick={()=>setMinimized(!minimized)}><Icon>{minimized ? 'expand_less' : 'expand_more'}</Icon></div>
-                                    <Grid container spacing={3} alignItems="center">
-                                        <Grid item xs={12} md={8}>
-                                            {user.module >= 5 ? (
-                                                <>
-                                                    <Typography variant="overline" color="#94a3b8" sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1, lineHeight: 1}}><Icon sx={{fontSize: 16}}>inventory_2</Icon> INVENTORY & PERFORMANCE CONTROL</Typography>
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs><Typography variant="caption" color="#cbd5e1" display="block">AVAILABLE TO SELL</Typography><Typography variant="h5" color={currentLiveInventory > 0 ? "#3b82f6" : "#ef4444"} className="mono">{currentLiveInventory.toLocaleString()}</Typography></Grid>
-                                                        <Grid item xs><Typography variant="caption" color="#cbd5e1" display="block">IN TRANSIT</Typography><Typography variant="h5" color="#f59e0b" className="mono">{shipments.filter(s => (liveTick - s.orderedAtTick) < (s.method === 'Local' ? 0 : (s.method === 'China_Air' ? 360 : 720))).reduce((sum, s) => sum + s.qty, 0).toLocaleString()}</Typography></Grid>
-                                                        <Grid item xs sx={{borderLeft: '1px solid rgba(255,255,255,0.2)', pl: 2}}><Typography variant="caption" color="#cbd5e1" display="block">STOCKOUTS (CHURN)</Typography><Typography variant="h5" color="#ef4444" className="mono">{salesData.stockouts || 0}</Typography></Grid>
-                                                        <Grid item xs><Typography variant="caption" color="#cbd5e1" display="block">RETAINED SALES</Typography><Typography variant="h5" color="#8b5cf6" className="mono">{salesData.retained || 0}</Typography></Grid>
-                                                    </Grid>
-                                                </>
-                                            ) : (
-                                                <><Typography variant="overline" color="#94a3b8" sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 1, lineHeight: 1}}><Icon sx={{fontSize: 16}}>query_stats</Icon> FORECAST</Typography><Typography variant="caption" color="#cbd5e1">Submit your decision to lock this module.</Typography></>
-                                            )}
-                                        </Grid>
-                                        <Grid item xs={12} md={4}>
-                                            {user.module >= 5 ? (
-                                                <Button variant="contained" fullWidth size="large" onClick={handleOrderInventory} disabled={orderCooldownActive} sx={{py: 2, borderRadius: 3, fontWeight: 700, background: orderCooldownActive ? '#64748b' : '#3b82f6'}}>{orderCooldownActive ? "Order Locked (Cooldown)" : "Order Inventory"}</Button>
-                                            ) : (<Button variant="contained" fullWidth size="large" onClick={submit} disabled={status === "busy"} sx={{py: 2, borderRadius: 3, fontWeight: 700}}>Submit Strategy</Button>)}
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            )}
+                            {/* TAB 1: WORKSPACE FOR REPORT SUBMISSIONS */}
+                            {navTab === 1 && user.module === 6 && (
+                                <div className="m3-card max-w-5xl mx-auto">
+                                    <Typography variant="h5" fontWeight="bold" mb={2} className="icon-text">
+                                        <Icon color="primary">rate_review</Icon> Final Report
+                                    </Typography>
 
-                            {/* TAB 5: HISTORICAL PERFORMANCE */}
-                            {navTab === (user.module >= 6 ? 5 : (user.module >= 5 ? 4 : 1)) && (
-                                <div className="m3-card"><PerformanceChart results={user.results} /></div>
+                                    {/* ASSIGNED PROMPT DESCRIPTIONS CONTAINER BOX */}
+                                    <Box sx={{background: '#f8fafc', p: 3, borderRadius: 3, border: '1px solid #e2e8f0', mb: 4}}>
+                                        <Typography variant="body2" sx={{color: '#334155', lineHeight: 1.75}}>
+                                            The simulation has now concluded, and your final brand score will be calculated soon after evaluation. However, this score accounts for only 90% of your overall project grade. The remaining 10% depends on the submission of your final report.
+                                            <br /><br />
+                                            All of your decisions from the previous modules (excluding the live Module 5) are now available on your dashboard. You are required to write a report of 500–800 words summarizing your overall strategy throughout the semester, module by module, while attempting this project.
+                                            <br /><br />
+                                            For Module 5, specifically discuss your advertising strategy and evaluate whether it achieved your intended results.
+                                            <br /><br />
+                                            There is no fixed format for the report. However, your evaluation will be based on how effectively your report aligns with and justifies the decisions you submitted during the simulation.
+                                            <br /><br />
+                                            <b>Good luck!</b>
+                                        </Typography>
+                                    </Box>
+
+                                    {reportSubmitted ? (
+                                        <Alert severity="success" sx={{ borderRadius: 3, py: 3 }}>
+                                            <AlertTitle sx={{ fontWeight: 'bold' }}>Report Saved</AlertTitle>
+                                            Your report has been saved and is currently awaiting evaluation by the instructor.
+                                        </Alert>
+                                    ) : (
+                                        <Stack spacing={3}>
+                                            <TextField
+                                                multiline
+                                                rows={15}
+                                                fullWidth
+                                                variant="outlined"
+                                                placeholder="Type your final report text here..."
+                                                value={reportText}
+                                                onChange={(e) => setReportText(e.target.value)}
+                                                sx={{
+                                                    background: 'white',
+                                                    '& .MuiOutlinedInput-root': { borderRadius: 3 }
+                                                }}
+                                            />
+
+                                            {/* WORDS VALIDATOR RANGE CONTROLS FOOTER */}
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="600" sx={{ color: isWordCountInvalid ? '#dc2626' : '#16a34a' }}>
+                                                    Word Count: {reportWordCount} / 800 {isWordCountInvalid && " (Must be between 500 and 800 words)"}
+                                                </Typography>
+                                                
+                                                <Button 
+                                                    variant="contained" 
+                                                    size="large" 
+                                                    onClick={handleReportSubmit}
+                                                    disabled={status === "saving-report" || isWordCountInvalid}
+                                                    sx={{ px: 5, borderRadius: 3, fontWeight: 'bold', background: isWordCountInvalid ? '#dc2626' : '#2563eb' }}
+                                                >
+                                                    {status === "saving-report" ? "Saving..." : "Submit Report to Instructor"}
+                                                </Button>
+                                            </Box>
+                                        </Stack>
+                                    )}
+                                </div>
                             )}
                         </Container>
                     </ThemeProvider>
                 );
             }
 
+            // ============================================================================
+            // AUTHENTICATION LOGIN
+            // ============================================================================
             return (
                 <ThemeProvider theme={theme}><CssBaseline />
                     <Container maxWidth="sm" sx={{ py: 10 }}>
                         <div className="m3-card" style={{background: 'rgba(255,255,255,0.7)'}}>
                             <Box textAlign="center" mb={4}><Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography></Box>
-                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}><Tab label="Login" /><Tab label="Register" /></Tabs>
+                            
+                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}>
+                                <Tab label="Login" />
+                                <Tab label="Register" disabled />
+                            </Tabs>
+                            
                             <Stack spacing={3}>
-                                {authTab === 1 && <TextField label="Roll No" fullWidth value={form.rollNo} onChange={e=>setForm({...form, rollNo:e.target.value.toUpperCase()})} />}
                                 <TextField label="Email (@itu.edu.pk)" fullWidth value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
                                 <TextField label="Password" type="password" fullWidth value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
-                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(authTab===0)} disabled={status==="loading"}>{status==="loading" ? "Loading..." : "Enter"}</Button>
+                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(true)} disabled={status==="loading"}>{status==="loading" ? "Authenticating..." : "Login"}</Button>
                             </Stack>
                         </div>
                     </Container>
