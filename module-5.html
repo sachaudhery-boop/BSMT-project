@@ -31,7 +31,7 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, Button, Box, Grid, Alert, AlertTitle, Icon, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, Tabs, Tab, Stack } = MaterialUI;
+        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, Button, Box, Grid, Stack, Icon } = MaterialUI;
 
         const theme = createTheme({ 
             palette: { primary: { main: '#3b82f6' }, background: { default: 'transparent' } }, 
@@ -44,17 +44,9 @@
             const SIMULATION_CLOSED = true; 
 
             const [view, setView] = useState("auth"); 
-            const [authTab, setAuthTab] = useState(0); 
-            const [navTab, setNavTab] = useState(0); 
             const [status, setStatus] = useState("idle"); 
             const [user, setUser] = useState(null); 
             const [form, setForm] = useState({ rollNo: "", email: "", password: ""});
-            
-            const [sheetLiquidCash, setSheetLiquidCash] = useState(0);
-
-            // Regulated controlled text input state
-            const [reportText, setReportText] = useState("");
-            const [reportSubmitted, setReportSubmitted] = useState(false);
 
             useEffect(() => {
                 const saved = localStorage.getItem('student_creds');
@@ -73,252 +65,71 @@
                         if(res.status === "success") { 
                             res.data.module = parseInt(res.data.module, 10);
                             setUser(res.data); 
-                            
-                            if (res.data.isFinalReportSubmitted) {
-                                setReportSubmitted(true);
-                            }
-
-                            if (res.data.liveState) {
-                                setSheetLiquidCash(parseFloat(res.data.liveState.liquidCash) || 0);
-                            }
-                            setView("dashboard"); localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
-                        } else { alert(res.message); localStorage.removeItem('student_creds'); }
+                            setView("dashboard"); 
+                            localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
+                        } else { 
+                            alert(res.message); 
+                            localStorage.removeItem('student_creds'); 
+                        }
                     }
                 } catch (e) { alert("Connection Error."); }
                 setStatus("idle");
             };
 
-            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); setReportSubmitted(false); setReportText(""); }
-            
-            // Controlled word count tracker mechanics
-            const reportWordCount = reportText.trim() === "" ? 0 : reportText.trim().split(/\s+/).length;
-            const isWordCountInvalid = reportWordCount < 500 || reportWordCount > 800;
+            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); }
 
-            const handleReportSubmit = async () => {
-                if (isWordCountInvalid) {
-                    return alert("Submission blocked: Your report must be between 500 and 800 words.");
-                }
-
-                if (!window.confirm("Are you sure you want to submit your final report? This cannot be undone.")) return;
-                
-                setStatus("saving-report");
-                let payload = {
-                    action: "submitFinalReport",
-                    companyId: user.companyId,
-                    rollNo: user.rollNo,
-                    equity: Math.floor(sheetLiquidCash),
-                    report: reportText
-                };
-
-                try {
-                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload) });
-                    alert("Report submitted successfully!");
-                    setReportSubmitted(true);
-                    if (user) user.isFinalReportSubmitted = true;
-                } catch(e) {
-                    alert("Connection error processing transmission.");
-                }
-                setStatus("idle");
-            };
-
+            // ============================================================================
+            // CLOSED DASHBOARD VIEW
+            // ============================================================================
             if (SIMULATION_CLOSED && view === "dashboard" && user) {
                 return (
                     <ThemeProvider theme={theme}><CssBaseline />
-                        <Container maxWidth={false} sx={{ pt: 4, pb: 10, px: {xs: 2, sm: 4, md: 8} }}>
+                        <Container maxWidth="md" sx={{ pt: 10, pb: 10 }}>
                             
-                            {/* SOLID RED CONDITIONAL HEADER BANNER LOGIC ENGINE */}
-                            <Box sx={{mb: 4, borderRadius: 3, background: '#dc2626', color: 'white', p: 3, boxShadow: '0 4px 15px rgba(220, 38, 38, 0.2)'}}>
-                                <Typography variant="h6" fontWeight="bold" sx={{display: 'flex', alignItems: 'center', gap: 1}}><Icon>error</Icon>Project Submissions Closed</Typography>
-                                <Typography variant="body2" sx={{mt: 0.5}}>
-                                    {user.module === 6 && (
-                                        <span>Submissions are closed now. All trading has halted. Your final brand scores will be posted once the pending modules are evaluated. Click on the <b>Submit Final Report</b> tab to submit your final report by Saturday, <b>23rd May 2026</b>.</span>
-                                    )}
-                                    {user.module < 6 && user.module > 1 && (
-                                        <span>Submissions are closed now. You project is incomplete and your brand score will be penalised accordingly</span>
-                                    )}
-                                    {user.module === 1 && (
-                                        <span>Submissions are closed now. You did not attempt the project and scored zero marks</span>
-                                    )}
-                                </Typography>
-                            </Box>
-
                             {/* HEADER INFRASTRUCTURE */}
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={6}>
                                 <div>
                                     <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text">
                                         <Icon sx={{fontSize: 32, color: '#3b82f6'}}>verified_user</Icon> {user.companyName}
                                     </Typography>
                                     <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
                                 </div>
-                                <Button variant="outlined" color="error" onClick={logout} startIcon={<Icon>logout</Icon>}>Logout</Button>
+                                <Button variant="outlined" color="error" onClick={logout} startIcon={<Icon>logout</Icon>} sx={{ borderRadius: 3, fontWeight: 'bold' }}>
+                                    Logout
+                                </Button>
                             </Box>
 
-                            {/* FULLROW METRIC BRAND BADGE CONTAINER */}
-                            <Grid container spacing={3} mb={5}>
-                                <Grid item xs={12}>
-                                    <Box sx={{background: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)', p: 4, borderRadius: 4, color: 'white', boxShadow: '0 10px 25px rgba(109, 40, 217, 0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <Box sx={{position: 'absolute', right: -20, top: -20, opacity: 0.12, color: 'white'}}><Icon sx={{fontSize: 160}}>workspace_premium</Icon></Box>
-                                        <Box>
-                                            <Typography variant="overline" sx={{color: '#ddd6fe', letterSpacing: '2px', fontWeight: 'bold'}} className="icon-text"><Icon sx={{color: '#c084fc'}}>stars</Icon> Current Brand Score Baseline</Typography>
-                                            <Typography variant="body2" sx={{color: '#f3e8ff', mt: 1, maxWidth: '500px'}}>Official calculated score performance standing at the conclusion of active modules.</Typography>
-                                        </Box>
-                                        <Typography variant="h1" className="mono" sx={{fontWeight: 800, textShadow: '0 4px 12px rgba(0,0,0,0.25)', pr: 2}}>{user.brand}</Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
+                            {/* ELEGANT CLOSED ANNOUNCEMENT CARD */}
+                            <Box sx={{
+                                background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                p: { xs: 4, md: 8 },
+                                borderRadius: 6,
+                                color: 'white',
+                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                                textAlign: 'center',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                {/* Decorative background element */}
+                                <Box sx={{ position: 'absolute', top: -30, right: -30, opacity: 0.05, transform: 'rotate(15deg)' }}>
+                                    <Icon sx={{ fontSize: 250 }}>lock_clock</Icon>
+                                </Box>
 
-                            {/* PORTAL NAVIGATION LINKS */}
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                                <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)}>
-                                    <Tab label="Historical Decision Log" icon={<Icon>list_alt</Icon>} iconPosition="start" />
-                                    {user.module === 6 && (
-                                        <Tab label="Submit Final Report" icon={<Icon>rate_review</Icon>} iconPosition="start" />
-                                    )}
-                                </Tabs>
+                                <Icon sx={{fontSize: 72, color: '#60a5fa', mb: 3}}>task_alt</Icon>
+                                
+                                <Typography variant="h3" fontWeight="800" mb={3} sx={{ letterSpacing: '-1px' }}>
+                                    Semester Project Closed
+                                </Typography>
+                                
+                                <Typography variant="h6" sx={{ color: '#94a3b8', fontWeight: 400, maxWidth: '600px', mx: 'auto', lineHeight: 1.8 }}>
+                                    The project has ended. Good Luck for your final exams.
+                                    <br /><br />
+                                    <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '1.15rem' }}>
+                                        Your final brand score will be posted soon.
+                                    </span>
+                                </Typography>
                             </Box>
 
-                            {/* TAB 0: HISTORICAL LOGS TABLE VIEW WITH WORD WRAPPING ACTIVE */}
-                            {navTab === 0 && (
-                                <div className="m3-card">
-                                    <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">list_alt</Icon> Complete Decisions Log (Your Inputs)</Typography>
-                                    <TableContainer component={Paper} elevation={0} sx={{border: '1px solid #e2e8f0', maxHeight: '600px', overflowX: 'auto'}}>
-                                        <Table stickyHeader size="small" sx={{whiteSpace: 'normal'}}>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Decision ID</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Company ID</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Module</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Method</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Courier</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Qty Ordered</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Marketing Budget</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Gross %</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Op %</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Goods Value</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CIF Value</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Duty Paid</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Value for GST</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total GST Paid</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Landed Cost</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>True Unit Cost</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Selling Price</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Status</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Recurring Model</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Trial Strategy</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Churn Strategy</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Sub Discount</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Effective Available Qty</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CAC Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Brand Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>RTO Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Method</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Qty</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Loan Taken</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {user.decisions && user.decisions.map((d, idx) => (
-                                                    <TableRow key={idx} hover>
-                                                        <TableCell sx={{color: '#64748b'}}>{d[0]}</TableCell>
-                                                        <TableCell>{d[1]}</TableCell>
-                                                        <TableCell sx={{fontWeight: 'bold'}}>Mod {d[2]}</TableCell>
-                                                        <TableCell>{d[3]}</TableCell>
-                                                        <TableCell>{d[4]}</TableCell>
-                                                        <TableCell className="mono">{d[5]}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[6] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">{d[7]}%</TableCell>
-                                                        <TableCell className="mono">{d[8]}%</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[9] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[10] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[11] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[12] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[13] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#ef4444', fontWeight: 'bold'}}>Rs {Number(d[14] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#f59e0b', fontWeight: 'bold'}}>Rs {Number(d[15] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#10b981', fontWeight: 'bold'}}>Rs {Number(d[16] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell><Chip label={d[17]} size="small" sx={{fontSize: '11px'}} /></TableCell>
-                                                        <TableCell>{d[18] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[19] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[20] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[21] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[22] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[23] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[24] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[25] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[26] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[27] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#d97706'}}>Rs {Number(d[28] || 0).toLocaleString()}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                </div>
-                            )}
-
-                            {/* TAB 1: WORKSPACE FOR REPORT SUBMISSIONS */}
-                            {navTab === 1 && user.module === 6 && (
-                                <div className="m3-card max-w-5xl mx-auto">
-                                    <Typography variant="h5" fontWeight="bold" mb={2} className="icon-text">
-                                        <Icon color="primary">rate_review</Icon> Final Report
-                                    </Typography>
-
-                                    {/* ASSIGNED PROMPT DESCRIPTIONS CONTAINER BOX */}
-                                    <Box sx={{background: '#f8fafc', p: 3, borderRadius: 3, border: '1px solid #e2e8f0', mb: 4}}>
-                                        <Typography variant="body2" sx={{color: '#334155', lineHeight: 1.75}}>
-                                            The simulation has now concluded, and your final brand score will be calculated soon after evaluation. However, this score accounts for only 90% of your overall project grade. The remaining 10% depends on the submission of your final report.
-                                            <br /><br />
-                                            All of your decisions from the previous modules (excluding the live Module 5) are now available on your dashboard. You are required to write a report of 500–800 words summarizing your overall strategy throughout the semester, module by module, while attempting this project.
-                                            <br /><br />
-                                            For Module 5, specifically discuss your advertising strategy and evaluate whether it achieved your intended results.
-                                            <br /><br />
-                                            There is no fixed format for the report. However, your evaluation will be based on how effectively your report aligns with and justifies the decisions you submitted during the simulation.
-                                            <br /><br />
-                                            <b>Good luck!</b>
-                                        </Typography>
-                                    </Box>
-
-                                    {reportSubmitted ? (
-                                        <Alert severity="success" sx={{ borderRadius: 3, py: 3 }}>
-                                            <AlertTitle sx={{ fontWeight: 'bold' }}>Report Saved</AlertTitle>
-                                            Your report has been saved and is currently awaiting evaluation by the instructor.
-                                        </Alert>
-                                    ) : (
-                                        <Stack spacing={3}>
-                                            <TextField
-                                                multiline
-                                                rows={15}
-                                                fullWidth
-                                                variant="outlined"
-                                                placeholder="Type your final report text here..."
-                                                value={reportText}
-                                                onChange={(e) => setReportText(e.target.value)}
-                                                sx={{
-                                                    background: 'white',
-                                                    '& .MuiOutlinedInput-root': { borderRadius: 3 }
-                                                }}
-                                            />
-
-                                            {/* WORDS VALIDATOR RANGE CONTROLS FOOTER */}
-                                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                <Typography variant="body2" fontWeight="600" sx={{ color: isWordCountInvalid ? '#dc2626' : '#16a34a' }}>
-                                                    Word Count: {reportWordCount} / 800 {isWordCountInvalid && " (Must be between 500 and 800 words)"}
-                                                </Typography>
-                                                
-                                                <Button 
-                                                    variant="contained" 
-                                                    size="large" 
-                                                    onClick={handleReportSubmit}
-                                                    disabled={status === "saving-report" || isWordCountInvalid}
-                                                    sx={{ px: 5, borderRadius: 3, fontWeight: 'bold', background: isWordCountInvalid ? '#dc2626' : '#2563eb' }}
-                                                >
-                                                    {status === "saving-report" ? "Saving..." : "Submit Report to Instructor"}
-                                                </Button>
-                                            </Box>
-                                        </Stack>
-                                    )}
-                                </div>
-                            )}
                         </Container>
                     </ThemeProvider>
                 );
@@ -331,17 +142,16 @@
                 <ThemeProvider theme={theme}><CssBaseline />
                     <Container maxWidth="sm" sx={{ py: 10 }}>
                         <div className="m3-card" style={{background: 'rgba(255,255,255,0.7)'}}>
-                            <Box textAlign="center" mb={4}><Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography></Box>
+                            <Box textAlign="center" mb={4}>
+                                <Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography>
+                            </Box>
                             
-                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}>
-                                <Tab label="Login" />
-                                <Tab label="Register" disabled />
-                            </Tabs>
-                            
-                            <Stack spacing={3}>
+                            <Stack spacing={3} mt={4}>
                                 <TextField label="Email (@itu.edu.pk)" fullWidth value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
                                 <TextField label="Password" type="password" fullWidth value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
-                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(true)} disabled={status==="loading"}>{status==="loading" ? "Authenticating..." : "Login"}</Button>
+                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(true)} disabled={status==="loading"} sx={{ py: 1.5, fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                    {status==="loading" ? "Authenticating..." : "Login"}
+                                </Button>
                             </Stack>
                         </div>
                     </Container>
