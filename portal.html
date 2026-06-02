@@ -1,354 +1,1119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSMT Ecommerce Semester Project - CLOSED</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        body { 
-            margin: 0; font-family: 'Poppins', sans-serif;
-            background: linear-gradient(225deg, #8399a2 0%, #eef2f3 100%);
-            min-height: 100vh; background-attachment: fixed;
-        }
-        .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
-        .m3-card { 
-            background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-            border-radius: 24px; padding: 24px; margin-bottom: 24px; 
-        }
-        .icon-text { display: flex; align-items: center; gap: 8px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSMT 22 Semester Project</title>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #64748b;
+      --soft-ink: #334155;
+      --primary: #3d5afe;
+      --accent: #d946ef;
+      --success: #10b981;
+      --glass: rgba(255, 255, 255, 0.58);
+      --glass-strong: rgba(255, 255, 255, 0.74);
+      --glass-border: rgba(255, 255, 255, 0.72);
+      --hairline: rgba(148, 163, 184, 0.22);
+      --shadow: 0 28px 80px rgba(31, 41, 83, 0.12);
+      --soft-shadow: 0 18px 48px rgba(31, 41, 83, 0.08);
+      --radius-xl: 34px;
+      --radius-lg: 26px;
+    }
+
+    * { box-sizing: border-box; }
+
+    img { display: block; max-width: 100%; height: auto; }
+    input, button, textarea, select { font: inherit; }
+
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(circle at 12% 80%, rgba(217, 70, 239, 0.17) 0, transparent 29%),
+        radial-gradient(circle at 87% 12%, rgba(61, 90, 254, 0.18) 0, transparent 30%),
+        radial-gradient(circle at 74% 91%, rgba(255, 214, 165, 0.35) 0, transparent 26%),
+        linear-gradient(135deg, #f8faff 0%, #eef4ff 46%, #fbf2ff 100%);
+      background-attachment: fixed;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.52;
+      background-image:
+        linear-gradient(rgba(255,255,255,.36) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.36) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(circle at 50% 28%, #000 0, transparent 68%);
+    }
+
+    .niche-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 999px;
+      background: var(--orb-gradient);
+      filter: blur(30px);
+      opacity: calc(var(--opacity) * .78);
+      transform: translateZ(0);
+      animation: floatOrb 54s ease-in-out infinite alternate;
+    }
+
+    .ambient-orb.a { --size: clamp(220px, 30vw, 560px); --opacity: .50; --orb-gradient: rgba(79, 70, 229, .26); top: -12vh; left: 8vw; }
+    .ambient-orb.b { --size: clamp(260px, 34vw, 600px); --opacity: .42; --orb-gradient: rgba(217, 70, 239, .24); right: -8vw; bottom: 3vh; animation-delay: -12s; }
+    .ambient-orb.c { --size: clamp(180px, 22vw, 420px); --opacity: .36; --orb-gradient: rgba(245, 158, 11, .22); left: 46vw; top: 46vh; animation-delay: -21s; }
+
+    @keyframes floatOrb {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(42px, -28px, 0) scale(1.08); }
+    }
+
+    .niche-orb {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1;
+      border-radius: 999px;
+      opacity: var(--orb-opacity, .56);
+      animation: iconDrift 58s ease-in-out infinite alternate;
+      transform: translateZ(0);
+    }
+
+    .niche-orb::before {
+      content: '';
+      position: absolute;
+      inset: 8%;
+      border-radius: inherit;
+      background: radial-gradient(circle, rgba(255,255,255,.30), rgba(255,255,255,.04) 52%, transparent 72%);
+      filter: blur(9px);
+    }
+
+    .niche-orb i {
+      position: relative;
+      z-index: 1;
+      color: var(--orb-color);
+      font-size: var(--icon-size);
+      opacity: .20;
+      filter: blur(3px) drop-shadow(0 18px 34px rgba(69, 64, 150, 0.14));
+      mix-blend-mode: multiply;
+    }
+
+    .niche-orb.one {
+      width: clamp(250px, 31vw, 540px);
+      top: -7vh;
+      right: 4vw;
+      --icon-size: clamp(180px, 23vw, 410px);
+      --orb-color: rgba(61, 90, 254, .55);
+    }
+
+    .niche-orb.two {
+      width: clamp(250px, 30vw, 510px);
+      left: 1vw;
+      bottom: -10vh;
+      --icon-size: clamp(170px, 22vw, 380px);
+      --orb-color: rgba(217, 70, 239, .48);
+      animation-delay: -11s;
+    }
+
+    .niche-orb.three {
+      width: clamp(170px, 20vw, 340px);
+      top: 38vh;
+      right: 19vw;
+      --icon-size: clamp(115px, 14vw, 240px);
+      --orb-color: rgba(99, 102, 241, .42);
+      --orb-opacity: .55;
+      animation-delay: -20s;
+    }
+
+    @keyframes iconDrift {
+      0% { transform: translate3d(0, 0, 0) rotate(-15deg) scale(1); }
+      45% { transform: translate3d(18px, -14px, 0) rotate(-7deg) scale(1.03); }
+      100% { transform: translate3d(36px, 25px, 0) rotate(5deg) scale(1.07); }
+    }
+
+    .shell {
+      width: min(1080px, calc(100vw - clamp(20px, 4vw, 40px)));
+      margin: clamp(18px, 5vw, 58px) auto clamp(54px, 8vw, 96px);
+      position: relative;
+      z-index: 3;
+    }
+
+    .glass-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255,255,255,.70), rgba(255,255,255,.46));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(26px);
+      -webkit-backdrop-filter: blur(26px);
+      padding: clamp(26px, 4vw, 44px);
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .glass-card::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      pointer-events: none;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,.46), transparent 38%);
+      opacity: .72;
+    }
+
+    .glass-card > * { position: relative; z-index: 1; }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: flex-start;
+      gap: clamp(18px, 3vw, 28px);
+      padding: clamp(22px, 3vw, 34px);
+    }
+
+    .topbar-main {
+      min-width: 0;
+    }
+
+    .topbar-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--primary);
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(30px, 4.2vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+      color: #172033;
+      overflow-wrap: anywhere;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      color: #526176;
+      font-size: clamp(14px, 1.6vw, 16px);
+      line-height: 1.65;
+      font-weight: 600;
+    }
+
+    .logout-button {
+      flex: 0 0 auto;
+    }
+
+    .score-stage {
+      position: relative;
+      min-height: clamp(420px, 52vw, 540px);
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      margin: 4px 0 36px;
+    }
+
+    #particleCanvas {
+      position: absolute;
+      width: 116%;
+      height: 120%;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(1.1px);
+      opacity: .76;
+    }
+
+    .score-card {
+      position: relative;
+      z-index: 1;
+      width: min(720px, 94%);
+      text-align: center;
+      padding: clamp(58px, 9vw, 108px) clamp(26px, 7vw, 86px);
+      border-radius: clamp(34px, 5vw, 52px);
+      background: linear-gradient(135deg, rgba(255,255,255,.78), rgba(255,255,255,.42));
+      border: 1px solid rgba(255,255,255,.82);
+      box-shadow: 0 30px 90px rgba(31, 41, 83, .16);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      overflow: hidden;
+    }
+
+    .score-card::before {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 22% 18%, rgba(255,255,255,.70), transparent 32%),
+        radial-gradient(circle at 82% 78%, rgba(217,70,239,.12), transparent 34%);
+      pointer-events: none;
+    }
+
+    .score-number {
+      position: relative;
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(78px, 14vw, 154px);
+      line-height: .90;
+      letter-spacing: -0.08em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #111827 0%, #3d5afe 48%, #d946ef 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .score-denominator {
+      font-size: .38em;
+      letter-spacing: -0.04em;
+      margin-left: .06em;
+    }
+
+    .score-label {
+      position: relative;
+      margin-top: 24px;
+      color: #59677d;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(12px, 1.6vw, 15px);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .22em;
+    }
+
+    .percentage-card {
+      text-align: center;
+      padding-block: clamp(28px, 4vw, 42px);
+      background:
+        linear-gradient(115deg, rgba(255,255,255,.86), rgba(255,255,255,.50)),
+        radial-gradient(circle at 20% 20%, rgba(61, 90, 254, .10), transparent 35%);
+    }
+
+    .percentage-card h2 {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(24px, 3.4vw, 38px);
+      line-height: 1.22;
+      letter-spacing: -0.04em;
+      color: #172033;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 18px;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(21px, 2.5vw, 28px);
+      line-height: 1.18;
+      font-weight: 800;
+      color: #182235;
+      letter-spacing: -0.03em;
+    }
+
+    .section-heading .material-icons {
+      width: 42px;
+      height: 42px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 15px;
+      background: rgba(255,255,255,.58);
+      border: 1px solid rgba(255,255,255,.66);
+      box-shadow: 0 12px 28px rgba(31, 41, 83, .08);
+    }
+
+    .feedback-text {
+      margin: 0;
+      line-height: 1.86;
+      color: var(--soft-ink);
+      white-space: pre-wrap;
+      font-size: clamp(15.5px, 1.7vw, 17px);
+      font-weight: 500;
+    }
+
+    .chart-wrapper {
+      width: 100%;
+      height: clamp(300px, 42vw, 380px);
+      position: relative;
+      margin-top: 8px;
+    }
+
+    .chart-wrapper canvas {
+      max-width: 100%;
+    }
+
+    .accordion-heading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0 18px;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(21px, 2.5vw, 28px);
+      font-weight: 800;
+      color: #182235;
+      letter-spacing: -0.03em;
+    }
+
+    .glass-accordion {
+      background: rgba(255,255,255,.50) !important;
+      border: 1px solid rgba(255,255,255,.70) !important;
+      border-radius: 24px !important;
+      margin-bottom: 16px !important;
+      box-shadow: var(--soft-shadow) !important;
+      backdrop-filter: blur(18px) !important;
+      -webkit-backdrop-filter: blur(18px) !important;
+      overflow: hidden !important;
+    }
+
+    .glass-accordion::before { display: none !important; }
+
+    .module-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      width: 100%;
+      padding-right: 18px;
+    }
+
+    .module-name {
+      color: #172033;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .score-chip {
+      flex: 0 0 auto;
+      color: #2547c7;
+      font-weight: 800;
+      font-size: 13px;
+      background: rgba(61,90,254,.11);
+      border: 1px solid rgba(61,90,254,.12);
+      padding: 7px 13px;
+      border-radius: 999px;
+    }
+
+    .empty-state {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .login-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 42px 18px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .login-card {
+      width: min(550px, 100%);
+      text-align: center;
+      padding: clamp(42px, 7vw, 64px);
+      background: linear-gradient(135deg, rgba(255,255,255,.78), rgba(255,255,255,.52));
+      border: 1px solid rgba(255,255,255,.76);
+      border-radius: 40px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(26px);
+      -webkit-backdrop-filter: blur(26px);
+    }
+
+    .login-title {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      font-size: clamp(36px, 6vw, 58px);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #111827, #3d5afe 54%, #d946ef);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .login-copy {
+      margin: 18px auto 30px;
+      max-width: 390px;
+      color: #526176;
+      line-height: 1.7;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .niche-orb.one { right: -14vw; top: -8vh; }
+      .niche-orb.two { left: -16vw; bottom: -12vh; }
+      .score-stage { min-height: clamp(350px, 60vw, 470px); }
+      #particleCanvas { width: 110%; height: 112%; }
+    }
+
+    @media (max-width: 760px) {
+      .shell { width: calc(100vw - 24px); }
+      .topbar { grid-template-columns: 1fr; gap: 18px; }
+      .topbar-actions { width: 100%; flex-direction: row; align-items: center; justify-content: flex-end; }
+      .logout-button { flex: 0 0 auto; }
+      .score-stage { min-height: 350px; margin-bottom: 24px; }
+      .module-row { align-items: flex-start; flex-direction: column; gap: 10px; }
+      .score-chip { align-self: flex-start; }
+    }
+
+    @media (max-width: 520px) {
+      body::before { background-size: 46px 46px; opacity: .34; }
+      .ambient-orb { filter: blur(22px); }
+      .niche-orb.one { width: 260px; right: -132px; top: -34px; --icon-size: 182px; }
+      .niche-orb.two { width: 250px; left: -136px; bottom: -82px; --icon-size: 174px; }
+      .niche-orb.three { display: none; }
+      .shell { width: calc(100vw - 20px); margin-top: 12px; margin-bottom: 46px; }
+      .glass-card { border-radius: 24px; padding: 22px 18px; margin-bottom: 18px; }
+      .topbar { padding: 20px 18px; }
+      .topbar-actions { flex-direction: column; align-items: stretch; gap: 12px; }
+      .logout-button { width: 100%; }
+      .eyebrow { font-size: 10.5px; letter-spacing: .13em; }
+      .title { font-size: clamp(28px, 9.5vw, 40px); line-height: 1.08; letter-spacing: -0.045em; }
+      .subtitle { margin-top: 10px; font-size: 13px; line-height: 1.55; }
+      .score-stage { min-height: 304px; margin: 0 0 22px; }
+      #particleCanvas { width: 114%; height: 114%; filter: blur(.8px); opacity: .72; }
+      .score-card { width: 100%; border-radius: 30px; padding: 46px 16px 44px; }
+      .score-number { font-size: clamp(62px, 22vw, 94px); line-height: .94; }
+      .score-label { margin-top: 16px; font-size: 10.5px; letter-spacing: .17em; }
+      .percentage-card h2 { font-size: clamp(20px, 6.2vw, 28px); }
+      .section-heading,
+      .accordion-heading { font-size: 20px; gap: 9px; }
+      .section-heading .material-icons { width: 36px; height: 36px; border-radius: 13px; }
+      .feedback-text { font-size: 15px; line-height: 1.76; }
+      .chart-wrapper { height: 275px; }
+      .login-wrap { min-height: 100svh; padding: 28px 12px; place-items: start center; }
+      .login-card { border-radius: 28px; padding: 34px 20px; }
+      .login-title { font-size: clamp(34px, 11vw, 48px); }
+      .login-copy { margin-bottom: 24px; font-size: 14px; }
+      .MuiAccordionSummary-root { padding: 0 18px !important; }
+      .MuiAccordionDetails-root { padding: 18px !important; }
+    }
+
+    @media (max-width: 380px) {
+      .shell { width: calc(100vw - 16px); }
+      .glass-card { padding-inline: 16px; }
+      .score-card { padding-inline: 12px; }
+      .score-number { font-size: clamp(56px, 21vw, 76px); }
+      .score-label { letter-spacing: .14em; }
+      .chart-wrapper { height: 246px; }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .glass-card,
+      .login-card,
+      .score-card,
+      .glass-accordion {
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-orb,
+      .niche-orb { animation: none !important; }
+      #particleCanvas { opacity: .48; filter: blur(.9px); }
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { createTheme, ThemeProvider, CssBaseline, Container, Typography, TextField, Button, Box, Grid, Alert, AlertTitle, Icon, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Paper, Chip, Tabs, Tab, Stack } = MaterialUI;
+  <div id="root"></div>
 
-        const theme = createTheme({ 
-            palette: { primary: { main: '#3b82f6' }, background: { default: 'transparent' } }, 
-            shape: { borderRadius: 16 }, typography: { fontFamily: 'Poppins', h5: { fontWeight: 700 }, h6: { fontWeight: 600 } }
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+    const { createTheme, ThemeProvider, CssBaseline, TextField, Button, Stack, Accordion, AccordionSummary, AccordionDetails, Icon } = MaterialUI;
+
+    const theme = createTheme({
+      palette: {
+        primary: { main: '#3d5afe' },
+        background: { default: 'transparent' },
+        text: { primary: '#111827', secondary: '#64748b' }
+      },
+      shape: { borderRadius: 18 },
+      typography: {
+        fontFamily: 'Inter, system-ui, sans-serif',
+        button: { textTransform: 'none', fontWeight: 800 }
+      },
+      components: {
+        MuiTextField: {
+          styleOverrides: {
+            root: {
+              '& .MuiOutlinedInput-root': {
+                background: 'rgba(255,255,255,.74)',
+                borderRadius: 18,
+                backdropFilter: 'blur(12px)'
+              }
+            }
+          }
+        },
+        MuiButton: {
+          styleOverrides: {
+            root: {
+              borderRadius: 18,
+              boxShadow: 'none',
+              fontFamily: 'Plus Jakarta Sans, Inter, sans-serif'
+            }
+          }
+        },
+        MuiAccordionSummary: {
+          styleOverrides: {
+            root: { minHeight: 68, padding: '0 22px' },
+            content: { margin: '16px 0' }
+          }
+        },
+        MuiAccordionDetails: {
+          styleOverrides: {
+            root: {
+              padding: '22px 24px 26px',
+              borderTop: '1px solid rgba(148, 163, 184, 0.20)'
+            }
+          }
+        }
+      }
+    });
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX6MniGhWOILDUQQlxSTPmKxFM8wilkTP3qiQ0Tq3ZbZCVPFJaZcBrJ-Uc_UNZ_YCoNw/exec";
+
+    function toNumber(value, fallback = 0) {
+      const number = Number(String(value ?? '').replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(number) ? number : fallback;
+    }
+
+    function getFirst(...values) {
+      return values.find(value => value !== undefined && value !== null && String(value).trim() !== '');
+    }
+
+    function getNicheIcons(niche) {
+      const n = String(niche || '').toLowerCase();
+      if (n.includes('fashion') || n.includes('apparel') || n.includes('clothing')) return ['fa-shirt', 'fa-bag-shopping', 'fa-gem'];
+      if (n.includes('beauty') || n.includes('skin') || n.includes('cosmetic')) return ['fa-spa', 'fa-spray-can-sparkles', 'fa-heart'];
+      if (n.includes('electronic') || n.includes('gadget') || n.includes('tech')) return ['fa-laptop-code', 'fa-microchip', 'fa-mobile-screen-button'];
+      if (n.includes('sport') || n.includes('fitness') || n.includes('gym')) return ['fa-dumbbell', 'fa-medal', 'fa-stopwatch'];
+      if (n.includes('furniture') || n.includes('home') || n.includes('decor')) return ['fa-couch', 'fa-house-chimney', 'fa-lightbulb'];
+      if (n.includes('supplement') || n.includes('health') || n.includes('wellness')) return ['fa-pills', 'fa-leaf', 'fa-heart-pulse'];
+      if (n.includes('food') || n.includes('restaurant') || n.includes('beverage')) return ['fa-utensils', 'fa-mug-hot', 'fa-bowl-food'];
+      if (n.includes('pet')) return ['fa-paw', 'fa-bone', 'fa-shield-dog'];
+      if (n.includes('education') || n.includes('book')) return ['fa-graduation-cap', 'fa-book-open', 'fa-lightbulb'];
+      return ['fa-cube', 'fa-chart-line', 'fa-star'];
+    }
+
+    function getParticleType(percentage) {
+      if (percentage >= 90) return 'fireworks';
+      if (percentage >= 80) return 'gold_stars';
+      if (percentage >= 70) return 'silver_stars';
+      if (percentage >= 60) return 'bronze_confetti';
+      if (percentage >= 50) return 'support_bubbles';
+      return 'soft_drops';
+    }
+
+    function normalizeHistory(user, finalBrandScore) {
+      if (Array.isArray(user?.history) && user.history.length) {
+        return user.history
+          .filter(item => item && (item.module || item.score !== undefined || item.feedback))
+          .map((item, index) => ({
+            module: getFirst(item.module, item.name, item.title, `Module ${index + 1}`),
+            score: toNumber(getFirst(item.score, item.brandScore, item.brand), 0),
+            feedback: getFirst(item.feedback, item.comment, item.remarks, 'No specific feedback recorded for this module.')
+          }));
+      }
+
+      const moduleKeys = [
+        ['Module 1', 'module1Score', 'm1Score', 'module1Brand', 'm1Brand', 'module1Feedback', 'm1Feedback'],
+        ['Module 2', 'module2Score', 'm2Score', 'module2Brand', 'm2Brand', 'module2Feedback', 'm2Feedback'],
+        ['Module 3', 'module3Score', 'm3Score', 'module3Brand', 'm3Brand', 'module3Feedback', 'm3Feedback'],
+        ['Module 4', 'module4Score', 'm4Score', 'module4Brand', 'm4Brand', 'module4Feedback', 'm4Feedback'],
+        ['Module 5', 'module5Score', 'm5Score', 'module5Brand', 'm5Brand', 'module5Feedback', 'm5Feedback'],
+        ['Final', 'finalScore', 'brand', 'finalBrandScore', 'finalBrand', 'overallFeedback', 'finalFeedback']
+      ];
+
+      const derived = moduleKeys.map(([label, scoreKeyA, scoreKeyB, scoreKeyC, scoreKeyD, feedbackKeyA, feedbackKeyB]) => {
+        const scoreValue = getFirst(user?.[scoreKeyA], user?.[scoreKeyB], user?.[scoreKeyC], user?.[scoreKeyD]);
+        if (scoreValue === undefined) return null;
+        return {
+          module: label,
+          score: toNumber(scoreValue, 0),
+          feedback: getFirst(user?.[feedbackKeyA], user?.[feedbackKeyB], 'No specific feedback recorded for this module.')
+        };
+      }).filter(Boolean);
+
+      if (derived.length) return derived;
+      return finalBrandScore ? [{ module: 'Final', score: finalBrandScore, feedback: 'Final brand score received. Module-level feedback was not included in the response.' }] : [];
+    }
+
+    function App() {
+      const [view, setView] = useState('auth');
+      const [status, setStatus] = useState('idle');
+      const [user, setUser] = useState(null);
+      const [form, setForm] = useState({ email: '', password: '' });
+      const chartRef = useRef(null);
+      const canvasRef = useRef(null);
+
+      useEffect(() => {
+        const saved = localStorage.getItem('bsmt_final_creds');
+        if (saved) {
+          try {
+            const creds = JSON.parse(saved);
+            setForm({ email: creds.email || '', password: creds.password || '' });
+            if (creds.email && creds.password) handleAuth(true, creds.email, creds.password);
+          } catch (error) {
+            localStorage.removeItem('bsmt_final_creds');
+          }
+        }
+      }, []);
+
+      const handleAuth = async (isAuto = false, email = form.email, password = form.password) => {
+        if (!email || !password) return alert('Enter credentials.');
+        setStatus('loading');
+        try {
+          const url = `${SCRIPT_URL}?action=login_final&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&nocache=${Date.now()}`;
+          const res = await fetch(url).then(r => r.json());
+          if (res.status === 'success') {
+            setUser(res.data);
+            setView('dashboard');
+            localStorage.setItem('bsmt_final_creds', JSON.stringify({ email, password }));
+          } else {
+            localStorage.removeItem('bsmt_final_creds');
+            if (!isAuto) alert(res.message || 'Login failed.');
+          }
+        } catch (error) {
+          if (!isAuto) alert('Connection error. Please check the deployed Apps Script URL.');
+        } finally {
+          setStatus('idle');
+        }
+      };
+
+      const logout = () => {
+        localStorage.removeItem('bsmt_final_creds');
+        setUser(null);
+        setView('auth');
+        setForm({ email: '', password: '' });
+      };
+
+      const finalBrandScore = toNumber(getFirst(user?.brand, user?.finalBrandScore, user?.finalScore), 0);
+      const finalPercentage = toNumber(getFirst(user?.percentage, user?.finalPercentage), Math.round((finalBrandScore / 150) * 100));
+      const companyName = getFirst(user?.companyName, user?.company, 'Your Company');
+      const ceoName = getFirst(user?.ceoName, user?.ceo, 'CEO');
+      const rollNo = getFirst(user?.rollNo, user?.rollNumber, 'Roll No');
+      const niche = getFirst(user?.niche, user?.category, 'Brand');
+      const overallFeedback = getFirst(user?.overallFeedback, user?.companyFeedback, user?.finalFeedback, user?.feedback, 'No overall feedback provided.');
+      const history = useMemo(() => normalizeHistory(user, finalBrandScore), [user, finalBrandScore]);
+      const nicheIcons = useMemo(() => getNicheIcons(niche), [niche]);
+      const particleType = getParticleType(finalPercentage);
+
+      useEffect(() => {
+        if (view !== 'dashboard' || !user || history.length === 0) return;
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (chartRef.current) chartRef.current.destroy();
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 360);
+        gradient.addColorStop(0, 'rgba(61, 90, 254, .30)');
+        gradient.addColorStop(0.55, 'rgba(217, 70, 239, .10)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+
+        chartRef.current = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: history.map(h => h.module),
+            datasets: [{
+              label: 'Brand Score',
+              data: history.map(h => h.score),
+              borderColor: '#3d5afe',
+              backgroundColor: gradient,
+              borderWidth: 4,
+              pointBackgroundColor: '#ffffff',
+              pointBorderColor: '#d946ef',
+              pointBorderWidth: 3,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              fill: true,
+              tension: .42
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: 'rgba(17, 24, 39, .88)',
+                padding: 12,
+                cornerRadius: 12,
+                displayColors: false,
+                callbacks: { label: context => `Brand score: ${context.parsed.y}` }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                suggestedMax: 150,
+                grid: { color: 'rgba(100, 116, 139, .12)', drawBorder: false },
+                ticks: { color: '#64748b', font: { family: 'Inter', weight: 700 } }
+              },
+              x: {
+                grid: { display: false, drawBorder: false },
+                ticks: {
+                  color: '#64748b',
+                  maxRotation: 0,
+                  autoSkip: true,
+                  font: { family: 'Inter', weight: 700, size: window.innerWidth < 520 ? 10 : 12 }
+                }
+              }
+            }
+          }
         });
 
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX6MniGhWOILDUQQlxSTPmKxFM8wilkTP3qiQ0Tq3ZbZCVPFJaZcBrJ-Uc_UNZ_YCoNw/exec"; 
+        return () => { if (chartRef.current) chartRef.current.destroy(); };
+      }, [view, user, history]);
 
-        function App() {
-            const SIMULATION_CLOSED = true; 
+      useEffect(() => {
+        if (view !== 'dashboard' || !user || !canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d', { alpha: true });
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isSmallScreen = window.matchMedia('(max-width: 640px)').matches;
 
-            const [view, setView] = useState("auth"); 
-            const [authTab, setAuthTab] = useState(0); 
-            const [navTab, setNavTab] = useState(0); 
-            const [status, setStatus] = useState("idle"); 
-            const [user, setUser] = useState(null); 
-            const [form, setForm] = useState({ rollNo: "", email: "", password: ""});
-            
-            const [sheetLiquidCash, setSheetLiquidCash] = useState(0);
+        let particles = [];
+        let animationFrame;
+        let lastBurst = 0;
+        let lastFrame = 0;
+        let isVisible = true;
+        let width = 0;
+        let height = 0;
 
-            // Regulated controlled text input state
-            const [reportText, setReportText] = useState("");
-            const [reportSubmitted, setReportSubmitted] = useState(false);
+        // Lower DPR keeps the canvas crisp enough while avoiding expensive high-resolution redraws.
+        const dpr = isSmallScreen ? 1 : Math.min(window.devicePixelRatio || 1, 1.35);
+        const targetFps = prefersReduced ? 12 : (isSmallScreen ? 24 : 30);
+        const frameInterval = 1000 / targetFps;
 
-            useEffect(() => {
-                const saved = localStorage.getItem('student_creds');
-                if(saved) {
-                    const creds = JSON.parse(saved);
-                    setForm(f => ({...f, email: creds.email, password: creds.password}));
-                    handleAuth(true, creds.email, creds.password);
-                }
-            }, []);
+        const configByType = {
+          // Still lightweight, but more visible: vector-only shapes, capped particles, and throttled FPS.
+          fireworks: { burstEvery: prefersReduced ? 2400 : 1250, burstCount: isSmallScreen ? 10 : 14, maxParticles: isSmallScreen ? 54 : 82, speed: 4.25, life: 58 },
+          gold_stars: { burstEvery: prefersReduced ? 2500 : 1350, burstCount: isSmallScreen ? 8 : 12, maxParticles: isSmallScreen ? 46 : 70, speed: 3.75, life: 62 },
+          silver_stars: { burstEvery: prefersReduced ? 2500 : 1350, burstCount: isSmallScreen ? 8 : 12, maxParticles: isSmallScreen ? 46 : 70, speed: 3.55, life: 62 },
+          bronze_confetti: { burstEvery: prefersReduced ? 2600 : 1400, burstCount: isSmallScreen ? 9 : 13, maxParticles: isSmallScreen ? 50 : 74, speed: 3.45, life: 64 },
+          support_bubbles: { burstEvery: prefersReduced ? 2700 : 1450, burstCount: isSmallScreen ? 7 : 10, maxParticles: isSmallScreen ? 38 : 58, speed: 3.05, life: 68 },
+          soft_drops: { burstEvery: prefersReduced ? 2700 : 1450, burstCount: isSmallScreen ? 7 : 10, maxParticles: isSmallScreen ? 38 : 58, speed: 2.90, life: 68 }
+        };
+        const settings = configByType[particleType] || configByType.soft_drops;
 
-            const handleAuth = async (isLogin, em = form.email, pw = form.password) => {
-                setStatus("loading");
-                try {
-                    if(isLogin) {
-                        const res = await fetch(`${SCRIPT_URL}?action=login&email=${encodeURIComponent(em)}&password=${encodeURIComponent(pw)}`).then(r => r.json());
-                        if(res.status === "success") { 
-                            res.data.module = parseInt(res.data.module, 10);
-                            setUser(res.data); 
-                            
-                            if (res.data.isFinalReportSubmitted) {
-                                setReportSubmitted(true);
-                            }
+        const resize = () => {
+          const rect = canvas.parentElement.getBoundingClientRect();
+          width = rect.width * 1.28;
+          height = rect.height * 1.32;
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+          canvas.style.width = `${Math.round(width)}px`;
+          canvas.style.height = `${Math.round(height)}px`;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
 
-                            if (res.data.liveState) {
-                                setSheetLiquidCash(parseFloat(res.data.liveState.liquidCash) || 0);
-                            }
-                            setView("dashboard"); localStorage.setItem('student_creds', JSON.stringify({email: em, password: pw}));
-                        } else { alert(res.message); localStorage.removeItem('student_creds'); }
-                    }
-                } catch (e) { alert("Connection Error."); }
-                setStatus("idle");
-            };
+        const onVisibilityChange = () => {
+          isVisible = !document.hidden;
+          if (isVisible) {
+            lastFrame = performance.now();
+            animationFrame = requestAnimationFrame(animate);
+          }
+        };
 
-            const logout = () => { localStorage.removeItem('student_creds'); setUser(null); setView("auth"); setReportSubmitted(false); setReportText(""); }
-            
-            // Controlled word count tracker mechanics
-            const reportWordCount = reportText.trim() === "" ? 0 : reportText.trim().split(/\s+/).length;
-            const isWordCountInvalid = reportWordCount < 500 || reportWordCount > 800;
+        window.addEventListener('resize', resize, { passive: true });
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        resize();
 
-            const handleReportSubmit = async () => {
-                if (isWordCountInvalid) {
-                    return alert("Submission blocked: Your report must be between 500 and 800 words.");
-                }
+        // Precompute a light star path once instead of rebuilding an expensive shape each frame.
+        const starPath = new Path2D();
+        for (let i = 0; i < 10; i++) {
+          const angle = -Math.PI / 2 + i * Math.PI / 5;
+          const radius = i % 2 === 0 ? 1 : .46;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          i === 0 ? starPath.moveTo(x, y) : starPath.lineTo(x, y);
+        }
+        starPath.closePath();
 
-                if (!window.confirm("Are you sure you want to submit your final report? This cannot be undone.")) return;
-                
-                setStatus("saving-report");
-                let payload = {
-                    action: "submitFinalReport",
-                    companyId: user.companyId,
-                    rollNo: user.rollNo,
-                    equity: Math.floor(sheetLiquidCash),
-                    report: reportText
-                };
+        class Particle {
+          constructor(type) {
+            this.reset(type);
+          }
 
-                try {
-                    await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: new URLSearchParams(payload) });
-                    alert("Report submitted successfully!");
-                    setReportSubmitted(true);
-                    if (user) user.isFinalReportSubmitted = true;
-                } catch(e) {
-                    alert("Connection error processing transmission.");
-                }
-                setStatus("idle");
-            };
+          reset(type) {
+            this.type = type;
+            this.x = width / 2 + (Math.random() - .5) * 80;
+            this.y = height / 2 + (Math.random() - .5) * 54;
+            this.size = Math.random() * 9 + 8;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * settings.speed + .75;
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
+            this.gravity = type === 'bronze_confetti' ? .026 : .016;
+            this.life = 0;
+            this.maxLife = Math.random() * 28 + settings.life;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.rotSpeed = (Math.random() - .5) * .055;
+            this.hue = Math.floor(Math.random() * 360);
+            this.bronze = ['#c47a32', '#b87333', '#d08a3c', '#9f6b3a'][Math.floor(Math.random() * 4)];
+            this.active = true;
+          }
 
-            if (SIMULATION_CLOSED && view === "dashboard" && user) {
-                return (
-                    <ThemeProvider theme={theme}><CssBaseline />
-                        <Container maxWidth={false} sx={{ pt: 4, pb: 10, px: {xs: 2, sm: 4, md: 8} }}>
-                            
-                            {/* SOLID RED CONDITIONAL HEADER BANNER LOGIC ENGINE */}
-                            <Box sx={{mb: 4, borderRadius: 3, background: '#dc2626', color: 'white', p: 3, boxShadow: '0 4px 15px rgba(220, 38, 38, 0.2)'}}>
-                                <Typography variant="h6" fontWeight="bold" sx={{display: 'flex', alignItems: 'center', gap: 1}}><Icon>error</Icon>Project Submissions Closed</Typography>
-                                <Typography variant="body2" sx={{mt: 0.5}}>
-                                    {user.module === 6 && (
-                                        <span>Submissions are closed now. All trading has halted. Your final brand scores will be posted once the pending modules are evaluated. Click on the <b>Submit Final Report</b> tab to submit your final report by Saturday, <b>23rd May 2026</b>.</span>
-                                    )}
-                                    {user.module < 6 && user.module > 1 && (
-                                        <span>Submissions are closed now. You project is incomplete and your brand score will be penalised accordingly</span>
-                                    )}
-                                    {user.module === 1 && (
-                                        <span>Submissions are closed now. You did not attempt the project and scored zero marks</span>
-                                    )}
-                                </Typography>
-                            </Box>
+          update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += this.gravity;
+            this.vx *= .988;
+            this.rotation += this.rotSpeed;
+            this.life += 1;
+            if (this.life >= this.maxLife) this.active = false;
+          }
 
-                            {/* HEADER INFRASTRUCTURE */}
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-                                <div>
-                                    <Typography variant="h4" fontWeight="bold" color="#1e293b" className="icon-text">
-                                        <Icon sx={{fontSize: 32, color: '#3b82f6'}}>verified_user</Icon> {user.companyName}
-                                    </Typography>
-                                    <Typography variant="body1" color="#475569" sx={{ml: 5}}>{user.rollNo} • Niche: {user.niche}</Typography>
-                                </div>
-                                <Button variant="outlined" color="error" onClick={logout} startIcon={<Icon>logout</Icon>}>Logout</Button>
-                            </Box>
+          get alpha() {
+            return Math.max(0, 1 - this.life / this.maxLife);
+          }
 
-                            {/* FULLROW METRIC BRAND BADGE CONTAINER */}
-                            <Grid container spacing={3} mb={5}>
-                                <Grid item xs={12}>
-                                    <Box sx={{background: 'linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%)', p: 4, borderRadius: 4, color: 'white', boxShadow: '0 10px 25px rgba(109, 40, 217, 0.2)', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <Box sx={{position: 'absolute', right: -20, top: -20, opacity: 0.12, color: 'white'}}><Icon sx={{fontSize: 160}}>workspace_premium</Icon></Box>
-                                        <Box>
-                                            <Typography variant="overline" sx={{color: '#ddd6fe', letterSpacing: '2px', fontWeight: 'bold'}} className="icon-text"><Icon sx={{color: '#c084fc'}}>stars</Icon> Current Brand Score Baseline</Typography>
-                                            <Typography variant="body2" sx={{color: '#f3e8ff', mt: 1, maxWidth: '500px'}}>Official calculated score performance standing at the conclusion of active modules.</Typography>
-                                        </Box>
-                                        <Typography variant="h1" className="mono" sx={{fontWeight: 800, textShadow: '0 4px 12px rgba(0,0,0,0.25)', pr: 2}}>{user.brand}</Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
+          draw(ctx) {
+            const alpha = this.alpha * .92;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
 
-                            {/* PORTAL NAVIGATION LINKS */}
-                            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-                                <Tabs value={navTab} onChange={(e,v)=>setNavTab(v)}>
-                                    <Tab label="Historical Decision Log" icon={<Icon>list_alt</Icon>} iconPosition="start" />
-                                    {user.module === 6 && (
-                                        <Tab label="Submit Final Report" icon={<Icon>rate_review</Icon>} iconPosition="start" />
-                                    )}
-                                </Tabs>
-                            </Box>
-
-                            {/* TAB 0: HISTORICAL LOGS TABLE VIEW WITH WORD WRAPPING ACTIVE */}
-                            {navTab === 0 && (
-                                <div className="m3-card">
-                                    <Typography variant="h6" mb={2} className="icon-text"><Icon color="primary">list_alt</Icon> Complete Decisions Log (Your Inputs)</Typography>
-                                    <TableContainer component={Paper} elevation={0} sx={{border: '1px solid #e2e8f0', maxHeight: '600px', overflowX: 'auto'}}>
-                                        <Table stickyHeader size="small" sx={{whiteSpace: 'normal'}}>
-                                            <TableHead>
-                                                <TableRow>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Decision ID</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Company ID</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Module</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Method</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Courier</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Qty Ordered</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Marketing Budget</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Gross %</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Target Op %</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Goods Value</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CIF Value</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Duty Paid</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Value for GST</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total GST Paid</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Total Landed Cost</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>True Unit Cost</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Selling Price</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Status</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Recurring Model</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Trial Strategy</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Churn Strategy</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Sub Discount</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Effective Available Qty</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>CAC Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Brand Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>RTO Mod</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Method</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Bridge Qty</TableCell>
-                                                    <TableCell fontWeight="bold" sx={{background: '#f8fafc', color: '#334155'}}>Loan Taken</TableCell>
-                                                </TableRow>
-                                            </TableHead>
-                                            <TableBody>
-                                                {user.decisions && user.decisions.map((d, idx) => (
-                                                    <TableRow key={idx} hover>
-                                                        <TableCell sx={{color: '#64748b'}}>{d[0]}</TableCell>
-                                                        <TableCell>{d[1]}</TableCell>
-                                                        <TableCell sx={{fontWeight: 'bold'}}>Mod {d[2]}</TableCell>
-                                                        <TableCell>{d[3]}</TableCell>
-                                                        <TableCell>{d[4]}</TableCell>
-                                                        <TableCell className="mono">{d[5]}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[6] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">{d[7]}%</TableCell>
-                                                        <TableCell className="mono">{d[8]}%</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[9] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[10] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[11] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[12] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono">Rs {Number(d[13] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#ef4444', fontWeight: 'bold'}}>Rs {Number(d[14] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#f59e0b', fontWeight: 'bold'}}>Rs {Number(d[15] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#10b981', fontWeight: 'bold'}}>Rs {Number(d[16] || 0).toLocaleString()}</TableCell>
-                                                        <TableCell><Chip label={d[17]} size="small" sx={{fontSize: '11px'}} /></TableCell>
-                                                        <TableCell>{d[18] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[19] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[20] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[21] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[22] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[23] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[24] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[25] || 'N/A'}</TableCell>
-                                                        <TableCell>{d[26] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono">{d[27] || 'N/A'}</TableCell>
-                                                        <TableCell className="mono" sx={{color: '#d97706'}}>Rs {Number(d[28] || 0).toLocaleString()}</TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </TableContainer>
-                                </div>
-                            )}
-
-                            {/* TAB 1: WORKSPACE FOR REPORT SUBMISSIONS */}
-                            {navTab === 1 && user.module === 6 && (
-                                <div className="m3-card max-w-5xl mx-auto">
-                                    <Typography variant="h5" fontWeight="bold" mb={2} className="icon-text">
-                                        <Icon color="primary">rate_review</Icon> Final Report
-                                    </Typography>
-
-                                    {/* ASSIGNED PROMPT DESCRIPTIONS CONTAINER BOX */}
-                                    <Box sx={{background: '#f8fafc', p: 3, borderRadius: 3, border: '1px solid #e2e8f0', mb: 4}}>
-                                        <Typography variant="body2" sx={{color: '#334155', lineHeight: 1.75}}>
-                                            The simulation has now concluded, and your final brand score will be calculated soon after evaluation. However, this score accounts for only 90% of your overall project grade. The remaining 10% depends on the submission of your final report.
-                                            <br /><br />
-                                            All of your decisions from the previous modules (excluding the live Module 5) are now available on your dashboard. You are required to write a report of 500–800 words summarizing your overall strategy throughout the semester, module by module, while attempting this project.
-                                            <br /><br />
-                                            For Module 5, specifically discuss your advertising strategy and evaluate whether it achieved your intended results.
-                                            <br /><br />
-                                            There is no fixed format for the report. However, your evaluation will be based on how effectively your report aligns with and justifies the decisions you submitted during the simulation.
-                                            <br /><br />
-                                            <b>Good luck!</b>
-                                        </Typography>
-                                    </Box>
-
-                                    {reportSubmitted ? (
-                                        <Alert severity="success" sx={{ borderRadius: 3, py: 3 }}>
-                                            <AlertTitle sx={{ fontWeight: 'bold' }}>Report Saved</AlertTitle>
-                                            Your report has been saved and is currently awaiting evaluation by the instructor.
-                                        </Alert>
-                                    ) : (
-                                        <Stack spacing={3}>
-                                            <TextField
-                                                multiline
-                                                rows={15}
-                                                fullWidth
-                                                variant="outlined"
-                                                placeholder="Type your final report text here..."
-                                                value={reportText}
-                                                onChange={(e) => setReportText(e.target.value)}
-                                                sx={{
-                                                    background: 'white',
-                                                    '& .MuiOutlinedInput-root': { borderRadius: 3 }
-                                                }}
-                                            />
-
-                                            {/* WORDS VALIDATOR RANGE CONTROLS FOOTER */}
-                                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                <Typography variant="body2" fontWeight="600" sx={{ color: isWordCountInvalid ? '#dc2626' : '#16a34a' }}>
-                                                    Word Count: {reportWordCount} / 800 {isWordCountInvalid && " (Must be between 500 and 800 words)"}
-                                                </Typography>
-                                                
-                                                <Button 
-                                                    variant="contained" 
-                                                    size="large" 
-                                                    onClick={handleReportSubmit}
-                                                    disabled={status === "saving-report" || isWordCountInvalid}
-                                                    sx={{ px: 5, borderRadius: 3, fontWeight: 'bold', background: isWordCountInvalid ? '#dc2626' : '#2563eb' }}
-                                                >
-                                                    {status === "saving-report" ? "Saving..." : "Submit Report to Instructor"}
-                                                </Button>
-                                            </Box>
-                                        </Stack>
-                                    )}
-                                </div>
-                            )}
-                        </Container>
-                    </ThemeProvider>
-                );
+            if (this.type === 'fireworks') {
+              // Simple colored dots + short rays: no per-particle gradients.
+              ctx.fillStyle = `hsla(${this.hue}, 88%, 62%, .78)`;
+              ctx.beginPath();
+              ctx.arc(0, 0, this.size * .72, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = `hsla(${this.hue}, 88%, 58%, .42)`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(-this.size, 0);
+              ctx.lineTo(this.size, 0);
+              ctx.moveTo(0, -this.size);
+              ctx.lineTo(0, this.size);
+              ctx.stroke();
+            } else if (this.type === 'gold_stars' || this.type === 'silver_stars') {
+              ctx.fillStyle = this.type === 'gold_stars' ? 'rgba(245, 190, 57, .84)' : 'rgba(203, 213, 225, .88)';
+              ctx.scale(this.size, this.size);
+              ctx.fill(starPath);
+            } else if (this.type === 'bronze_confetti') {
+              ctx.fillStyle = this.bronze;
+              ctx.fillRect(-this.size / 2, -this.size / 6, this.size * 1.15, this.size * .30);
+            } else if (this.type === 'support_bubbles') {
+              ctx.strokeStyle = 'rgba(61, 90, 254, .54)';
+              ctx.lineWidth = 1.4;
+              ctx.beginPath();
+              ctx.arc(0, 0, this.size * .78, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(-this.size * .28, 0);
+              ctx.lineTo(-this.size * .05, this.size * .22);
+              ctx.lineTo(this.size * .34, -this.size * .24);
+              ctx.stroke();
+            } else {
+              ctx.fillStyle = 'rgba(100, 116, 139, .42)';
+              ctx.beginPath();
+              ctx.ellipse(0, 0, this.size * .52, this.size * .78, 0, 0, Math.PI * 2);
+              ctx.fill();
             }
 
-            // ============================================================================
-            // AUTHENTICATION LOGIN
-            // ============================================================================
-            return (
-                <ThemeProvider theme={theme}><CssBaseline />
-                    <Container maxWidth="sm" sx={{ py: 10 }}>
-                        <div className="m3-card" style={{background: 'rgba(255,255,255,0.7)'}}>
-                            <Box textAlign="center" mb={4}><Typography variant="h4" fontWeight="bold" color="primary">BSMT Ecommerce</Typography></Box>
-                            
-                            <Tabs value={authTab} onChange={(e,v)=>setAuthTab(v)} centered sx={{mb:3}}>
-                                <Tab label="Login" />
-                                <Tab label="Register" disabled />
-                            </Tabs>
-                            
-                            <Stack spacing={3}>
-                                <TextField label="Email (@itu.edu.pk)" fullWidth value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
-                                <TextField label="Password" type="password" fullWidth value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
-                                <Button variant="contained" fullWidth size="large" onClick={()=>handleAuth(true)} disabled={status==="loading"}>{status==="loading" ? "Authenticating..." : "Login"}</Button>
-                            </Stack>
-                        </div>
-                    </Container>
-                </ThemeProvider>
-            );
+            ctx.restore();
+          }
         }
-        const root = ReactDOM.createRoot(document.getElementById('root')); root.render(<App />);
-    </script>
+
+        function createBurst() {
+          for (let i = 0; i < settings.burstCount; i++) particles.push(new Particle(particleType));
+          if (particles.length > settings.maxParticles) particles.splice(0, particles.length - settings.maxParticles);
+        }
+
+        function animate(timestamp) {
+          if (!isVisible) return;
+          animationFrame = requestAnimationFrame(animate);
+          if (timestamp - lastFrame < frameInterval) return;
+          lastFrame = timestamp;
+
+          ctx.clearRect(0, 0, width, height);
+          if (!lastBurst || timestamp - lastBurst > settings.burstEvery) {
+            createBurst();
+            lastBurst = timestamp;
+          }
+
+          for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            particles[i].draw(ctx);
+            if (!particles[i].active) particles.splice(i, 1);
+          }
+        }
+
+        createBurst();
+        createBurst();
+        animationFrame = requestAnimationFrame(animate);
+
+        return () => {
+          cancelAnimationFrame(animationFrame);
+          window.removeEventListener('resize', resize);
+          document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+      }, [view, user, particleType]);
+      if (view === 'auth') {
+        const loginIcons = getNicheIcons('brand');
+        return (
+          <ThemeProvider theme={theme}><CssBaseline />
+            <div className="niche-bg" aria-hidden="true">
+              <span className="ambient-orb a"></span>
+              <span className="ambient-orb b"></span>
+              <span className="ambient-orb c"></span>
+              {loginIcons.map((icon, idx) => (
+                <span key={idx} className={`niche-orb ${['one', 'two', 'three'][idx]}`}>
+                  <i className={`fas ${icon}`}></i>
+                </span>
+              ))}
+            </div>
+            <main className="login-wrap">
+              <section className="login-card">
+                <p className="eyebrow">BSMT 22 Semester Project</p>
+                <h1 className="login-title">Final Results</h1>
+                <p className="login-copy">Login to view your final semester project evaluation, brand score, feedback, and module progress.</p>
+                <Stack spacing={2.5}>
+                  <TextField label="Email" fullWidth value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                  <TextField label="Password" type="password" fullWidth value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                  <Button variant="contained" size="large" onClick={() => handleAuth(false)} disabled={status === 'loading'} sx={{ py: 1.55, background: 'linear-gradient(135deg, #3d5afe, #d946ef)' }}>
+                    {status === 'loading' ? 'Authenticating...' : 'View Results'}
+                  </Button>
+                </Stack>
+              </section>
+            </main>
+          </ThemeProvider>
+        );
+      }
+
+      return (
+        <ThemeProvider theme={theme}><CssBaseline />
+          <div className="niche-bg" aria-hidden="true">
+            <span className="ambient-orb a"></span>
+            <span className="ambient-orb b"></span>
+            <span className="ambient-orb c"></span>
+            {nicheIcons.map((icon, idx) => (
+              <span key={idx} className={`niche-orb ${['one', 'two', 'three'][idx]}`}>
+                <i className={`fas ${icon}`}></i>
+              </span>
+            ))}
+          </div>
+
+          <main className="shell">
+            <header className="glass-card topbar">
+              <div className="topbar-main">
+                <p className="eyebrow">BSMT 22 Semester Project</p>
+                <h1 className="title">{companyName}</h1>
+                <p className="subtitle">{ceoName} • {rollNo} • {niche}</p>
+              </div>
+              <div className="topbar-actions">
+                <Button className="logout-button" variant="outlined" color="error" onClick={logout} sx={{ borderRadius: '999px', fontWeight: 800, px: 3.2, py: 1.1 }}>
+                  Logout
+                </Button>
+              </div>
+            </header>
+
+            <section className="score-stage" aria-label="Final brand score">
+              <canvas id="particleCanvas" ref={canvasRef}></canvas>
+              <div className="score-card">
+                <h2 className="score-number">{finalBrandScore}<span className="score-denominator">/150</span></h2>
+                <div className="score-label">Final Brand Score</div>
+              </div>
+            </section>
+
+            <section className="glass-card percentage-card">
+              <h2>You scored {finalPercentage}% marks in your semester project.</h2>
+            </section>
+
+            <section className="glass-card">
+              <h2 className="section-heading"><span className="material-icons" style={{ color: '#d946ef' }}>reviews</span> Overall Feedback</h2>
+              <p className="feedback-text">{overallFeedback}</p>
+            </section>
+
+            <section className="glass-card">
+              <h2 className="section-heading"><span className="material-icons" style={{ color: '#3d5afe' }}>timeline</span> Brand Score Across Modules</h2>
+              {history.length > 0 ? (
+                <div className="chart-wrapper">
+                  <canvas id="performanceChart"></canvas>
+                </div>
+              ) : (
+                <p className="empty-state">Module score history was not included in the response. Once the Google Sheet sends module data, the graph will appear here.</p>
+              )}
+            </section>
+
+            <section>
+              <h2 className="accordion-heading"><span className="material-icons" style={{ color: '#10b981' }}>history</span> Module Feedback Archive</h2>
+              {history.length > 0 ? history.map((mod, index) => (
+                <Accordion key={index} className="glass-accordion" disableGutters elevation={0}>
+                  <AccordionSummary expandIcon={<Icon>expand_more</Icon>}>
+                    <div className="module-row">
+                      <span className="module-name">{mod.module}</span>
+                      <span className="score-chip">Score: {mod.score}</span>
+                    </div>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <p className="feedback-text" style={{ fontSize: '15.5px' }}>{mod.feedback || 'No specific feedback recorded for this module.'}</p>
+                  </AccordionDetails>
+                </Accordion>
+              )) : (
+                <div className="glass-card">
+                  <p className="empty-state">Module feedback tabs will appear here once module feedback is returned by the Google Sheet.</p>
+                </div>
+              )}
+            </section>
+          </main>
+        </ThemeProvider>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
